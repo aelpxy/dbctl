@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	POSTGRES_DEFAULT_IMAGE string = "postgres:14.5-alpine"
-	REDIS_DEFAULT_IMAGE    string = "redis:7.0.5-alpine"
+	REDIS_IMAGE    string = "bitnami/redis:latest"
+	POSTGRES_IMAGE string = "bitnami/postgresql:latest"
+	MYSQL_IMAGE    string = "bitnami/mysql:latest"
 )
 
 func main() {
@@ -28,6 +29,17 @@ func main() {
 
 	if *dbType == "postgres" {
 		log.Println("Creating Postgres DB container...")
-		db.Create_PostgresDB(*dbPassword, *dbPort, POSTGRES_DEFAULT_IMAGE)
+		fmt.Printf("Using %s Image from DockerHub", MYSQL_IMAGE)
+		db.Create_PostgresDB(*dbPassword, *dbPort, POSTGRES_IMAGE)
+	}
+
+	if *dbType == "mysql" {
+		fmt.Println("MySQL")
+		fmt.Printf("Using %s Image from DockerHub", MYSQL_IMAGE)
+	}
+
+	if *dbType == "redis" {
+		fmt.Println("Redis")
+		fmt.Printf("Using %s Image from DockerHub", REDIS_IMAGE)
 	}
 }
