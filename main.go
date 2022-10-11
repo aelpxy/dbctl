@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	db "github.com/aelpxy/dbctl/databases"
@@ -27,13 +26,16 @@ func main() {
 	}
 
 	if *dbType == "postgres" {
+
+		fmt.Println("Deploying Database...")
 		fmt.Printf("Using %s Image from DockerHub \n", POSTGRES_IMAGE)
-		log.Println("Creating Postgres container...")
 		db.Create_PostgresDB(*dbPassword, *dbPort, POSTGRES_IMAGE)
 	}
 
 	if *dbType == "redis" {
-		fmt.Println("Redis")
+
+		fmt.Println("Deploying Database...")
 		fmt.Printf("Using %s Image from DockerHub \n", REDIS_IMAGE)
+		db.Create_RedisDB(*dbPassword, *dbPort, REDIS_IMAGE)
 	}
 }
