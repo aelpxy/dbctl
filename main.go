@@ -17,17 +17,21 @@ func main() {
 	dbType := flag.String("db", "postgres", "Type of database to deploy.")
 	dbPort := flag.String("port", "5432", "The port on which the database will listen.")
 
+	flag.Parse()
+
 	if *dbType == "postgres" {
-		fmt.Printf("Container Name: %s", *containerName)
-		fmt.Printf("Seletcted Database: %s", *dbType)
-		fmt.Printf("Seletcted Port: %s", *dbPort)
+		fmt.Printf("Container Name: %s \n", *containerName)
+		fmt.Printf("Seletcted Database: %s \n", *dbType)
+		fmt.Printf("Seletcted Port: %s \n", *dbPort)
 
 		util.Pull_Image(POSTGRES_DEFAULT_IMAGE)
 	}
 
 	if *dbType == "redis" {
+		fmt.Printf("Container Name: %s \n", *containerName)
+		fmt.Printf("Seletcted Database: %s \n", *dbType)
+		fmt.Printf("Seletcted Port: %s \n", *dbPort)
 		util.Pull_Image(REDIS_DEFAULT_IMAGE)
 	}
 
-	flag.Parse()
 }
