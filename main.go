@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
-	util "github.com/aelpxy/dbctl/utils"
+	db "github.com/aelpxy/dbctl/databases"
 )
 
 const (
@@ -14,29 +15,19 @@ const (
 )
 
 func main() {
-	containerName := flag.String("name", "default", "Name to use for the database container (Don't use default name).")
-	dbType := flag.String("db", "postgres", "Type of database to deploy.")
-	dbPort := flag.String("port", "5432", "The port on which the database will listen.")
+	dbPassword := flag.String("password", "password", "Password to use for that database.")
+	dbType := flag.String("db", "none", "Type of database to deploy.")
+	dbPort := flag.String("p", "5432", "The port on which the database will listen.")
 
 	flag.Parse()
 
-	if *containerName == "default" {
+	if *dbType == "none" {
 		fmt.Println("Need help? Use the -h flag for more information.")
 		os.Exit(0)
 	}
 
 	if *dbType == "postgres" {
-		fmt.Printf("Container Name: %s \n", *containerName)
-		fmt.Printf("Seletcted Database: %s \n", *dbType)
-		fmt.Printf("Seletcted Port: %s \n", *dbPort)
-
-		util.Pull_Image(POSTGRES_DEFAULT_IMAGE)
-	}
-
-	if *dbType == "redis" {
-		fmt.Printf("Container Name: %s \n", *containerName)
-		fmt.Printf("Seletcted Database: %s \n", *dbType)
-		fmt.Printf("Seletcted Port: %s \n", *dbPort)
-		util.Pull_Image(REDIS_DEFAULT_IMAGE)
+		log.Println("Creating Postgres DB container...")
+		db.Create_PostgresDB(*dbPassword, *dbPort, POSTGRES_DEFAULT_IMAGE)
 	}
 }
