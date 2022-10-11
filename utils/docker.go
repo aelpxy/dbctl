@@ -21,7 +21,7 @@ func Pull_Image(imageName string) {
 	for {
 		line, _, _ := buf.ReadLine()
 		if line == nil {
-			log.Println("Successfully pulled docker image.")
+			log.Println("Successfully pulled container image")
 			os.Exit(0)
 		}
 		log.Println(string(line))
