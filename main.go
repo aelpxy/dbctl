@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	util "github.com/aelpxy/dbctl/utils"
 )
@@ -13,11 +14,16 @@ const (
 )
 
 func main() {
-	containerName := flag.String("name", "postgres-db", "Name to use for the database container.")
+	containerName := flag.String("name", "default", "Name to use for the database container (Don't use default name).")
 	dbType := flag.String("db", "postgres", "Type of database to deploy.")
 	dbPort := flag.String("port", "5432", "The port on which the database will listen.")
 
 	flag.Parse()
+
+	if *containerName == "default" {
+		fmt.Println("Need help? Use the -h flag for more information.")
+		os.Exit(0)
+	}
 
 	if *dbType == "postgres" {
 		fmt.Printf("Container Name: %s \n", *containerName)
@@ -33,5 +39,4 @@ func main() {
 		fmt.Printf("Seletcted Port: %s \n", *dbPort)
 		util.Pull_Image(REDIS_DEFAULT_IMAGE)
 	}
-
 }
