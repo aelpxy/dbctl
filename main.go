@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	db "github.com/aelpxy/dbctl/databases"
 	"github.com/spf13/cobra"
@@ -24,6 +25,12 @@ func main() {
 		ValidArgs: []string{"redis", "postgresql"},
 		Run: func(cmd *cobra.Command, args []string) {
 			// value := strings.Join(args, " ")
+
+			if container_password == "" {
+				fmt.Println("Container password cannot be null.")
+				os.Exit(0)
+			}
+
 			switch args[0] {
 			case "postgresql":
 				db.Create_PostgresDB(container_password, container_port, POSTGRES_IMAGE)
