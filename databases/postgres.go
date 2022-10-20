@@ -2,31 +2,33 @@ package db
 
 import (
 	"bufio"
-	"fmt"
 	"log"
-	"os"
 	"os/exec"
 )
 
 func Create_PostgresDB(password, port, image string) {
 	cmd := exec.Command("docker", "run", "-d", "-e", "POSTGRES_PASSWORD="+password, "-p", port+":5432", image)
+	r, _ := cmd.StdoutPipe()
 
-	stdout, err := cmd.StdoutPipe()
+	cmd.Stderr = cmd.Stdout
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	done := make(chan struct{})
+	scanner := bufio.NewScanner(r)
 
-	cmd.Start()
-
-	buf := bufio.NewReader(stdout)
-	for {
-		line, _, _ := buf.ReadLine()
-		if line == nil {
-			log.Println("Container created successfully")
-			fmt.Printf("Connection String: postgres://postgres:%s@localhost:%s/postgres \n", password, port)
-			os.Exit(0)
+	go func() {
+		for scanner.Scan() {
+			line := scanner.Text()
+			log.Println(line)
 		}
-		log.Println(string(line))
-	}
+
+		done <- struct{}{}
+	}()
+
+	err := cmd.Start()
+	log.Println(err)
+
+	<-done
+
+	err = cmd.Wait()
+	log.Println(err)
 }

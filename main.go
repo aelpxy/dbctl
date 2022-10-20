@@ -1,11 +1,10 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"os"
 
 	db "github.com/aelpxy/dbctl/databases"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -14,28 +13,32 @@ const (
 )
 
 func main() {
-	dbPassword := flag.String("password", "password", "Password to use for that database.")
-	dbType := flag.String("db", "none", "Type of database to deploy.")
-	dbPort := flag.String("p", "5432", "The port on which the database will listen.")
+	var container_port string
+	var container_password string
 
-	flag.Parse()
-
-	if *dbType == "none" {
-		fmt.Println("Need help? Use the -h flag for more information.")
-		os.Exit(0)
+	dbCmd := &cobra.Command{
+		Use:       "deploy [redis, postgresql]",
+		Short:     "Deploy a database [redis, postgresql]",
+		Long:      `Deploy database in a docker container`,
+		Args:      cobra.MinimumNArgs(1),
+		ValidArgs: []string{"redis", "postgresql"},
+		Run: func(cmd *cobra.Command, args []string) {
+			// value := strings.Join(args, " ")
+			switch args[0] {
+			case "postgresql":
+				db.Create_PostgresDB(container_password, container_port, POSTGRES_IMAGE)
+			case "redis":
+				db.Create_RedisDB(container_password, container_port, REDIS_IMAGE)
+			default:
+				fmt.Println("Valid options are redis & postgresql.")
+			}
+		},
 	}
 
-	if *dbType == "postgres" {
+	dbCmd.Flags().StringVarP(&container_port, "port", "p", "", "Port to expose database on.")
+	dbCmd.Flags().StringVarP(&container_password, "password", "w", "", "Password to set on database.")
 
-		fmt.Println("Deploying Database...")
-		fmt.Printf("Using %s Image from DockerHub \n", POSTGRES_IMAGE)
-		db.Create_PostgresDB(*dbPassword, *dbPort, POSTGRES_IMAGE)
-	}
-
-	if *dbType == "redis" {
-
-		fmt.Println("Deploying Database...")
-		fmt.Printf("Using %s Image from DockerHub \n", REDIS_IMAGE)
-		db.Create_RedisDB(*dbPassword, *dbPort, REDIS_IMAGE)
-	}
+	rootCmd := &cobra.Command{Use: "dbctl"}
+	rootCmd.AddCommand(dbCmd)
+	rootCmd.Execute()
 }
