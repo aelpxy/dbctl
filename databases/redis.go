@@ -24,11 +24,9 @@ func Create_RedisDB(password, port, image string) {
 		done <- struct{}{}
 	}()
 
-	err := cmd.Start()
-	log.Println(err)
+	cmd.Start()
 
 	<-done
 
-	err = cmd.Wait()
-	log.Println(err)
+	cmd.Wait()
 }
