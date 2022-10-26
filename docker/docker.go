@@ -6,8 +6,17 @@ import (
 	"os/exec"
 )
 
-func Command_Exec(bin, arg string) {
-	cmd := exec.Command(bin, arg)
+func Delete_Container(id string) {
+	bin := "docker"
+	args := []string{"rm", id, "-f"}
+
+	Command_Exec(bin, args)
+}
+
+func Connect_Shell(id string) {}
+
+func Command_Exec(bin string, arg []string) {
+	cmd := exec.Command(bin, arg...)
 	r, _ := cmd.StdoutPipe()
 
 	cmd.Stderr = cmd.Stdout
