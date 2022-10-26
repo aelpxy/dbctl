@@ -37,7 +37,7 @@ func main() {
 				fmt.Printf("Connection String: postgres://postgres:%s@localhost:%s/postgres \n", container_password, container_port)
 			case "redis":
 				db.Create_RedisDB(container_password, container_port, REDIS_IMAGE)
-				fmt.Printf("Connection String: redis://default:%s@localhost:%s/db \n", container_password, container_port)
+				fmt.Printf("Connection String: redis://default:%s@localhost:%s \n", container_password, container_port)
 			default:
 				fmt.Println("Valid options are redis & postgresql.")
 			}
