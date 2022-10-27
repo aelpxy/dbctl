@@ -7,13 +7,9 @@ import (
 )
 
 func Delete_Container(id string) {
-	bin := "docker"
 	args := []string{"rm", id, "-f"}
-
-	Command_Exec(bin, args)
+	Command_Exec("docker", args)
 }
-
-func Connect_Shell(id string) {}
 
 func Command_Exec(bin string, arg []string) {
 	cmd := exec.Command(bin, arg...)

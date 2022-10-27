@@ -48,7 +48,7 @@ func main() {
 	dbDeleteCmd := &cobra.Command{
 		Use:   "delete [container id]",
 		Short: "Delete a docker container",
-		Long:  "Delete a docker container using its id.",
+		Long:  "Delete a docker container using its id",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if args[0] == "" {
@@ -63,6 +63,7 @@ func main() {
 	dbCmd.Flags().StringVarP(&container_password, "password", "w", "", "Password to set on database.")
 
 	rootCmd := &cobra.Command{Use: "dbctl"}
+
 	rootCmd.AddCommand(dbCmd)
 	rootCmd.AddCommand(dbDeleteCmd)
 
