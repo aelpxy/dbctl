@@ -11,6 +11,16 @@ func Delete_Container(id string) {
 	Command_Exec("docker", args)
 }
 
+func Pull_Image(name string) {
+	args := []string{"pull", name}
+	Command_Exec("docker", args)
+}
+
+func Purge_Image(name string) {
+	args := []string{"image", "rm", name}
+	Command_Exec("docker", args)
+}
+
 func Command_Exec(bin string, arg []string) {
 	cmd := exec.Command(bin, arg...)
 	r, _ := cmd.StdoutPipe()
