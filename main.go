@@ -63,9 +63,7 @@ func main() {
 	dbCmd.Flags().StringVarP(&container_password, "password", "w", "", "Password to set on database.")
 
 	rootCmd := &cobra.Command{Use: "dbctl"}
-
 	rootCmd.AddCommand(dbCmd)
 	rootCmd.AddCommand(dbDeleteCmd)
-
 	rootCmd.Execute()
 }

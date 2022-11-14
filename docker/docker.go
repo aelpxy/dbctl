@@ -21,12 +21,15 @@ func Purge_Image(name string) {
 	Command_Exec("docker", args)
 }
 
+func Create_Network(name string) {
+	args := []string{"network", "create", name}
+	Command_Exec("docker", args)
+}
+
 func Command_Exec(bin string, arg []string) {
 	cmd := exec.Command(bin, arg...)
 	r, _ := cmd.StdoutPipe()
-
 	cmd.Stderr = cmd.Stdout
-
 	done := make(chan struct{})
 	scanner := bufio.NewScanner(r)
 
@@ -35,7 +38,6 @@ func Command_Exec(bin string, arg []string) {
 			line := scanner.Text()
 			fmt.Println(line)
 		}
-
 		done <- struct{}{}
 	}()
 
