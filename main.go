@@ -52,7 +52,7 @@ func main() {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if args[0] == "" {
-				fmt.Println("Id cannout be null")
+				fmt.Println("id cannot be null")
 				os.Exit(0)
 			}
 			docker.Delete_Container(args[0])
