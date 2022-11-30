@@ -44,6 +44,9 @@ func main() {
 			}
 		},
 	}
+	
+	dbCmd.Flags().StringVarP(&container_port, "port", "p", "", "Port to expose database on.")
+	dbCmd.Flags().StringVarP(&container_password, "password", "w", "", "Password to set on database.")
 
 	dbDeleteCmd := &cobra.Command{
 		Use:   "delete [container id]",
@@ -59,11 +62,9 @@ func main() {
 		},
 	}
 
-	dbCmd.Flags().StringVarP(&container_port, "port", "p", "", "Port to expose database on.")
-	dbCmd.Flags().StringVarP(&container_password, "password", "w", "", "Password to set on database.")
-
 	rootCmd := &cobra.Command{Use: "dbctl"}
 	rootCmd.AddCommand(dbCmd)
 	rootCmd.AddCommand(dbDeleteCmd)
+	
 	rootCmd.Execute()
 }
