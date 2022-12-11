@@ -28,7 +28,12 @@ func main() {
 		ValidArgs: []string{"redis", "postgresql"},
 		Run: func(cmd *cobra.Command, args []string) {
 			if container_password == "" {
-				fmt.Println("Container password cannot be null.")
+				fmt.Println("Database password was not provided")
+				os.Exit(0)
+			}
+
+			if container_port == "" {
+				fmt.Println("Database port was not provided")
 				os.Exit(0)
 			}
 
