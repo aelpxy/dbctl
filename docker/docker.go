@@ -26,6 +26,11 @@ func Create_Network(name string) {
 	Command_Exec("docker", args)
 }
 
+func List_Containers() {
+	args := []string{"ps"}
+	Command_Exec("docker", args)
+}
+
 func Command_Exec(bin string, arg []string) {
 	cmd := exec.Command(bin, arg...)
 	r, _ := cmd.StdoutPipe()
