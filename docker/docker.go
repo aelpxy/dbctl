@@ -6,6 +6,11 @@ import (
 	"os/exec"
 )
 
+func Backup_Database(id, backup_name string) {
+	args := []string{"exec", "-it", id, "pg_dump", "-U", "postgres", "--column-inserts", "--data-only", "postgres", ">", backup_name, ".sql"}
+	Command_Exec("docker", args)
+}
+
 func Delete_Container(id string) {
 	args := []string{"rm", id, "-f"}
 	Command_Exec("docker", args)
