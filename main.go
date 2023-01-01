@@ -89,10 +89,21 @@ func main() {
 		},
 	}
 
+	dbListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List docker containers",
+		Long:  "List all the docker containers",
+		// Args:  cobra.MinimumNArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			docker.List_Containers()
+		},
+	}
+
 	rootCmd := &cobra.Command{Use: "dbctl"}
 	rootCmd.AddCommand(dbCmd)
 	rootCmd.AddCommand(dbDeleteCmd)
 	rootCmd.AddCommand(dbBackupCmd)
+	rootCmd.AddCommand(dbListCmd)
 
 	rootCmd.Execute()
 }
