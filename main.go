@@ -29,11 +29,11 @@ func main() {
 		Args:      cobra.MinimumNArgs(1),
 		ValidArgs: []string{"redis", "postgresql"},
 		Run: func(cmd *cobra.Command, args []string) {
+			
 			if container_password == "" {
 				fmt.Println("Database password was not provided")
 				os.Exit(0)
 			}
-
 			if container_port == "" {
 				fmt.Println("Database port was not provided")
 				os.Exit(0)
@@ -93,7 +93,6 @@ func main() {
 		Use:   "list",
 		Short: "List docker containers",
 		Long:  "List all the docker containers",
-		// Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			docker.List_Containers()
 		},
