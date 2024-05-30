@@ -1,59 +1,36 @@
 package docker
 
 import (
-	"bufio"
+	"context"
 	"fmt"
-	"os/exec"
+	"log"
+
+	"github.com/aelpxy/dbctl/config"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 )
 
-func Backup_Database(id, backup_name string) {
-	args := []string{"exec", "-it", id, "pg_dump", "-U", "postgres", "--column-inserts", "--data-only", "postgres", ">", backup_name, ".sql"}
-	Command_Exec("docker", args)
-}
+var Ctx context.Context
 
-func Delete_Container(id string) {
-	args := []string{"rm", id, "-f"}
-	Command_Exec("docker", args)
-}
+func DockerClient() (*client.Client, error) {
+	Ctx = context.Background()
 
-func Pull_Image(name string) {
-	args := []string{"pull", name}
-	Command_Exec("docker", args)
-}
+	apiClient, err := client.NewClientWithOpts(client.FromEnv)
 
-func Purge_Image(name string) {
-	args := []string{"image", "rm", name}
-	Command_Exec("docker", args)
-}
+	if err != nil {
+		return nil, err
+	}
 
-func Create_Network(name string) {
-	args := []string{"network", "create", name}
-	Command_Exec("docker", args)
-}
+	_, err = apiClient.NetworkInspect(Ctx, config.DockerNetworkName, types.NetworkInspectOptions{})
 
-func List_Containers() {
-	args := []string{"ps"}
-	Command_Exec("docker", args)
-}
+	// basically checks if `config.DockerNetworkName` exists otherwise creates
+	if err != nil {
+		_, err = apiClient.NetworkCreate(Ctx, config.DockerNetworkName, types.NetworkCreate{})
 
-func Command_Exec(bin string, arg []string) {
-	cmd := exec.Command(bin, arg...)
-	r, _ := cmd.StdoutPipe()
-	cmd.Stderr = cmd.Stdout
-	done := make(chan struct{})
-	scanner := bufio.NewScanner(r)
-
-	go func() {
-		for scanner.Scan() {
-			line := scanner.Text()
-			fmt.Println(line)
+		if err != nil {
+			log.Fatalln(fmt.Errorf("error creating docker network: %w", err))
 		}
-		done <- struct{}{}
-	}()
+	}
 
-	cmd.Start()
-
-	<-done
-
-	cmd.Wait()
+	return apiClient, nil
 }
