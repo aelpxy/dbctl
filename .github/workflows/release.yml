@@ -6,7 +6,7 @@ on:
 
 jobs:
   releases-matrix:
-    name: Build
+    name: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -14,10 +14,9 @@ jobs:
         goarch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v3
-      - uses: wangyoucao577/go-release-action@v1.34
+      - uses: wangyoucao577/go-release-action@v1.50
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
           md5sum: false
-          extra_files: LICENSE README.md
