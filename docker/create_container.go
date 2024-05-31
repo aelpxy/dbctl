@@ -12,7 +12,7 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-func CreateContainer(imageName, dbType, containerName string, port int, password string, envVars ...string) (string, error) {
+func CreateContainer(imageName, dbType, containerName string, externalPort int, password string, envVars ...string) (string, error) {
 	dockerClient, err := DockerClient()
 
 	if err != nil {
@@ -27,19 +27,35 @@ func CreateContainer(imageName, dbType, containerName string, port int, password
 		return "", fmt.Errorf("error creating volume: %w", err)
 	}
 
+	var internalPort int
+	var mountSource string
+	var mountTarget string
+	var cmd []string
+
+	hostIP := utils.GetIP().String()
+
+	switch dbType {
+	case "postgres":
+		internalPort = 5432
+	case "redis":
+		internalPort = 6379
+	case "mysql":
+		internalPort = 3306
+	case "mariadb":
+		internalPort = 3306
+	case "mongo":
+		internalPort = 27017
+	default:
+		return "", fmt.Errorf("unsupported database type: %s", dbType)
+	}
+
 	containerConfig := &container.Config{
 		Image: imageName,
 		Env:   envVars,
 		ExposedPorts: nat.PortSet{
-			nat.Port(strconv.Itoa(port) + "/tcp"): struct{}{},
+			nat.Port(strconv.Itoa(internalPort) + "/tcp"): struct{}{},
 		},
 	}
-
-	hostIP := utils.GetIP().String()
-
-	var mountSource string
-	var mountTarget string
-	var cmd []string
 
 	switch dbType {
 	case "postgres":
@@ -85,10 +101,10 @@ func CreateContainer(imageName, dbType, containerName string, port int, password
 		NetworkMode:   container.NetworkMode(config.DockerNetworkName),
 		RestartPolicy: container.RestartPolicy{Name: "always"},
 		PortBindings: nat.PortMap{
-			nat.Port(strconv.Itoa(port) + "/tcp"): []nat.PortBinding{
+			nat.Port(strconv.Itoa(internalPort) + "/tcp"): []nat.PortBinding{
 				{
 					HostIP:   hostIP,
-					HostPort: strconv.Itoa(port),
+					HostPort: strconv.Itoa(externalPort),
 				},
 			},
 		},
