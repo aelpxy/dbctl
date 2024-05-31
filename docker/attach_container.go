@@ -6,9 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"strings"
 
-	"github.com/aelpxy/dbctl/config"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 )
@@ -20,13 +18,10 @@ func ShellConnect(containerID string) error {
 		return fmt.Errorf("error creating docker client: %w", err)
 	}
 
-	Tcontainer, err := dockerClient.ContainerInspect(context.Background(), containerID)
+	inspectedContainer, err := InspectContainer(containerID)
+
 	if err != nil {
 		return fmt.Errorf("error inspecting container: %w", err)
-	}
-
-	if !strings.HasPrefix(strings.TrimPrefix(Tcontainer.Name, "/"), config.DockerContainerPrefix) {
-		return fmt.Errorf("this container %s is not managed by dbctl", Tcontainer.Name)
 	}
 
 	out, err := dockerClient.ContainerAttach(context.Background(), containerID, container.AttachOptions{
@@ -43,7 +38,7 @@ func ShellConnect(containerID string) error {
 
 	defer out.Close()
 
-	exec, err := dockerClient.ContainerExecCreate(context.Background(), containerID, types.ExecConfig{
+	exec, err := dockerClient.ContainerExecCreate(context.Background(), inspectedContainer.ID, types.ExecConfig{
 		Cmd:          []string{"sh", "-c", "TERM=xterm-256color; export TERM; exec /bin/sh -i"},
 		AttachStdin:  true,
 		AttachStdout: true,

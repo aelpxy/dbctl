@@ -17,27 +17,24 @@ func DeleteContainer(containerId string, deleteVolume bool) error {
 		return fmt.Errorf("error creating docker client: %w", err)
 	}
 
-	Tcontainer, err := dockerClient.ContainerInspect(context.Background(), containerId)
+	inspectedContainer, err := InspectContainer(containerId)
+
 	if err != nil {
 		return fmt.Errorf("error inspecting container: %w", err)
 	}
 
-	if !strings.HasPrefix(strings.TrimPrefix(Tcontainer.Name, "/"), config.DockerContainerPrefix) {
-		return fmt.Errorf("this container %s is not managed by dbctl", Tcontainer.Name)
-	}
-
 	containerSpinner := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
-	containerSpinner.Suffix = fmt.Sprintf(" Stopping container %s... \n", strings.TrimPrefix(Tcontainer.Name, "/"))
+	containerSpinner.Suffix = fmt.Sprintf(" Stopping container %s... \n", strings.TrimPrefix(inspectedContainer.Name, "/"))
 	containerSpinner.Color("green")
 	containerSpinner.Start()
 
-	err = dockerClient.ContainerStop(context.Background(), Tcontainer.ID, container.StopOptions{})
+	err = dockerClient.ContainerStop(context.Background(), inspectedContainer.ID, container.StopOptions{})
 
 	if err != nil {
 		return fmt.Errorf("error stopping container: %w", err)
 	}
 
-	err = dockerClient.ContainerRemove(context.Background(), Tcontainer.ID, container.RemoveOptions{
+	err = dockerClient.ContainerRemove(context.Background(), inspectedContainer.ID, container.RemoveOptions{
 		RemoveVolumes: deleteVolume,
 		Force:         true,
 	})
@@ -51,7 +48,7 @@ func DeleteContainer(containerId string, deleteVolume bool) error {
 	if deleteVolume {
 		// this waits for the container to be fully removed before deleting the volume
 		for {
-			_, err := dockerClient.ContainerInspect(context.Background(), Tcontainer.ID)
+			_, err := dockerClient.ContainerInspect(context.Background(), inspectedContainer.ID)
 			if err != nil {
 				break
 			}
@@ -59,7 +56,7 @@ func DeleteContainer(containerId string, deleteVolume bool) error {
 		}
 
 		// faily hacky solution
-		volumeName := config.DockerVolumeName + Tcontainer.Name[len(fmt.Sprintf("/%s", config.DockerContainerPrefix)):]
+		volumeName := config.DockerVolumeName + inspectedContainer.Name[len(fmt.Sprintf("/%s", config.DockerContainerPrefix)):]
 
 		fmt.Printf("Deleted volume %s\n", volumeName)
 
