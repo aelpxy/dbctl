@@ -21,6 +21,16 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Prints the current dbctl version",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("%s \n", config.Version)
+	},
+}
+
 func Execute() {
+	rootCmd.AddCommand(versionCmd)
+
 	rootCmd.Execute()
 }
