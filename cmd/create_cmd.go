@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// todo add support for memory and cpu args
 var createCmd = &cobra.Command{
 	Use:   "create <database-type>[:image-tag]",
 	Short: "Create a new database",
@@ -91,9 +92,7 @@ func createDatabase(part string, password string, port int, name string) {
 		spinner.Color("green")
 		spinner.Start()
 
-		containerID, err := docker.CreateContainer(imageTag, dbType, name, port, password, []string{
-			fmt.Sprintf("POSTGRES_PASSWORD=%s", password),
-		})
+		containerID, err := docker.CreateContainer(imageTag, dbType, name, port, password, fmt.Sprintf("POSTGRES_PASSWORD=%s", password))
 
 		if err != nil {
 			log.Fatalf("error creating container: %v", err)
@@ -135,6 +134,42 @@ func createDatabase(part string, password string, port int, name string) {
 		if err != nil {
 			log.Fatalf("Error pulling image: %v", err)
 		}
+
+		spinner := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+		spinner.Suffix = fmt.Sprintf(" Creating %s database... \n", name)
+		spinner.Color("green")
+		spinner.Start()
+
+		containerID, err := docker.CreateContainer(imageTag, dbType, name, port, password)
+
+		if err != nil {
+			log.Fatalf("error creating container: %v", err)
+		}
+
+		spinner.Stop()
+
+		data := [][]string{
+			{"Container ID", containerID},
+			{"Database Type", dbType},
+			{"Image Tag", imageTag},
+			{"Port", strconv.Itoa(port)},
+			{"Password", password},
+		}
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"Key", "Value"})
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+
+		for _, v := range data {
+			table.Append(v)
+		}
+
+		table.Render()
+
+		fmt.Println()
+
+		fmt.Printf("Connection String: redis://default:%s@%s:%s \n", password, utils.GetIP(), strconv.Itoa(port))
+
 	case "mysql":
 		imageTag = config.MySQLImageTag
 		if imageVersion != "" {

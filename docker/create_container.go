@@ -12,7 +12,7 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-func CreateContainer(imageName, dbType, containerName string, port int, password string, envVars []string) (string, error) {
+func CreateContainer(imageName, dbType, containerName string, port int, password string, envVars ...string) (string, error) {
 	dockerClient, err := DockerClient()
 	if err != nil {
 		return "", fmt.Errorf("error creating docker client: %w", err)
@@ -21,6 +21,7 @@ func CreateContainer(imageName, dbType, containerName string, port int, password
 	_, err = dockerClient.VolumeCreate(Ctx, volume.CreateOptions{
 		Name: config.DockerVolumeName + containerName,
 	})
+
 	if err != nil {
 		return "", fmt.Errorf("error creating volume: %w", err)
 	}
@@ -37,6 +38,7 @@ func CreateContainer(imageName, dbType, containerName string, port int, password
 
 	var mountSource string
 	var mountTarget string
+	var cmd []string
 
 	if dbType == "postgres" {
 		mountSource = config.DockerVolumeName + containerName
@@ -44,10 +46,22 @@ func CreateContainer(imageName, dbType, containerName string, port int, password
 		containerConfig.Env = append(containerConfig.Env,
 			"POSTGRES_DB=postgres",
 			"POSTGRES_USER=postgres",
+			"POSTGRES_PASSWORD="+password,
 		)
+	} else if dbType == "redis" {
+		mountSource = config.DockerVolumeName + containerName
+		mountTarget = "/data"
+		containerConfig.Env = append(containerConfig.Env,
+			"REDIS_PASSWORD="+password,
+		)
+		cmd = []string{"redis-server", "--requirepass", password}
 	} else {
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/data"
+	}
+
+	if len(cmd) > 0 {
+		containerConfig.Cmd = cmd
 	}
 
 	hostConfig := &container.HostConfig{
@@ -73,11 +87,13 @@ func CreateContainer(imageName, dbType, containerName string, port int, password
 	containerName = fmt.Sprintf("%s%s", config.DockerContainerPrefix, containerName)
 
 	resp, err := dockerClient.ContainerCreate(Ctx, containerConfig, hostConfig, nil, nil, containerName)
+
 	if err != nil {
 		return "", fmt.Errorf("error creating container: %w", err)
 	}
 
 	err = dockerClient.ContainerStart(Ctx, resp.ID, container.StartOptions{})
+
 	if err != nil {
 		return "", fmt.Errorf("error starting container: %w", err)
 	}
