@@ -32,8 +32,5 @@ func init() {
 }
 
 func GenerateName() string {
-	adjectiveIndex := r.Intn(len(ADJECTIVES))
-	nounIndex := r.Intn(len(NOUNS))
-
-	return ADJECTIVES[adjectiveIndex] + "-" + NOUNS[nounIndex] + "-" + ADJECTIVES[adjectiveIndex] + "-" + NOUNS[nounIndex]
+	return ADJECTIVES[r.Intn(len(ADJECTIVES))] + "-" + NOUNS[r.Intn(len(NOUNS))] + "-" + ADJECTIVES[r.Intn(len(ADJECTIVES))] + "-" + NOUNS[r.Intn(len(NOUNS))]
 }
