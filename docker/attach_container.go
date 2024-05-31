@@ -25,7 +25,6 @@ func ShellConnect(containerID string) error {
 		return fmt.Errorf("error inspecting container: %w", err)
 	}
 
-	// good job you found it
 	if !strings.HasPrefix(strings.TrimPrefix(Tcontainer.Name, "/"), config.DockerContainerPrefix) {
 		return fmt.Errorf("this container %s is not managed by dbctl", Tcontainer.Name)
 	}

@@ -10,8 +10,8 @@ import (
 var shellCmd = &cobra.Command{
 	Use:     "shell <container-id>",
 	Short:   "Connect to a running container",
-	Long:    `Connect to a running container and open an interactive shell session inside it.`,
-	Example: "dbctl shell the-container-id",
+	Long:    `Connect to a running container and open an interactive shell session inside it`,
+	Example: "dbctl shell container-id",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		containerID := args[0]

@@ -14,6 +14,7 @@ import (
 
 func CreateContainer(imageName, dbType, containerName string, port int, password string, envVars ...string) (string, error) {
 	dockerClient, err := DockerClient()
+
 	if err != nil {
 		return "", fmt.Errorf("error creating docker client: %w", err)
 	}
@@ -40,22 +41,31 @@ func CreateContainer(imageName, dbType, containerName string, port int, password
 	var mountTarget string
 	var cmd []string
 
-	if dbType == "postgres" {
+	switch dbType {
+	case "postgres":
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/var/lib/postgresql/data"
 		containerConfig.Env = append(containerConfig.Env,
 			"POSTGRES_DB=postgres",
 			"POSTGRES_USER=postgres",
-			"POSTGRES_PASSWORD="+password,
 		)
-	} else if dbType == "redis" {
+	case "redis":
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/data"
-		containerConfig.Env = append(containerConfig.Env,
-			"REDIS_PASSWORD="+password,
-		)
 		cmd = []string{"redis-server", "--requirepass", password}
-	} else {
+	case "mysql":
+		mountSource = config.DockerVolumeName + containerName
+		mountTarget = "/var/lib/mysql"
+	case "mariadb":
+		mountSource = config.DockerVolumeName + containerName
+		mountTarget = "/var/lib/mysql"
+	case "mongo":
+		mountSource = config.DockerVolumeName + containerName
+		mountTarget = "/data/db"
+		containerConfig.Env = append(containerConfig.Env,
+			"MONGO_INITDB_ROOT_USERNAME=root",
+		)
+	default:
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/data"
 	}

@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net"
 	"os/exec"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 )
@@ -66,4 +67,16 @@ func GetColorBasedOnStatus(status string) tablewriter.Colors {
 	default:
 		return tablewriter.Colors{tablewriter.FgWhiteColor, tablewriter.BgBlackColor}
 	}
+}
+
+func ParseDBTypeAndVersion(part string) (string, string) {
+	parts := strings.Split(part, ":")
+	dbType := parts[0]
+	imageVersion := ""
+
+	if len(parts) > 1 {
+		imageVersion = parts[1]
+	}
+
+	return dbType, imageVersion
 }
