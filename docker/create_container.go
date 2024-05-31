@@ -61,6 +61,7 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 	case "postgres":
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/var/lib/postgresql/data"
+
 		containerConfig.Env = append(containerConfig.Env,
 			"POSTGRES_DB=postgres",
 			"POSTGRES_USER=postgres",
@@ -68,18 +69,25 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 	case "redis":
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/data"
+
 		cmd = []string{"redis-server", "--requirepass", password}
 	case "mysql":
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/var/lib/mysql"
+
+		containerConfig.Env = append(containerConfig.Env, "MYSQL_DATABASE=db")
 	case "mariadb":
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/var/lib/mysql"
+
+		containerConfig.Env = append(containerConfig.Env, "MARIADB_DATABASE=db")
 	case "mongo":
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/data/db"
+
 		containerConfig.Env = append(containerConfig.Env,
 			"MONGO_INITDB_ROOT_USERNAME=root",
+			"MONGO_INITDB_DATABASE=db",
 		)
 	default:
 		mountSource = config.DockerVolumeName + containerName

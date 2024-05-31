@@ -200,10 +200,10 @@ func printConnectionString(dbType, password string, port int) {
 	case "redis":
 		fmt.Printf("Connection String: redis://default:%s@%s:%d\n", password, utils.GetIP(), port)
 	case "mysql":
-		fmt.Printf("Connection String: mysql://root:%s@%s:%d/\n", password, utils.GetIP(), port)
+		fmt.Printf("Connection String: mysql://root:%s@%s:%d/db\n", password, utils.GetIP(), port)
 	case "mariadb":
-		fmt.Printf("Connection String: mariadb://root:%s@%s:%d/\n", password, utils.GetIP(), port)
+		fmt.Printf("Connection String: mariadb://root:%s@%s:%d/db\n", password, utils.GetIP(), port)
 	case "mongo":
-		fmt.Printf("Connection String: mongodb://root:%s@%s:%d/\n", password, utils.GetIP(), port)
+		fmt.Printf("Connection String: mongodb://root:%s@%s:%d/db?authSource=admin\n", password, utils.GetIP(), port)
 	}
 }
