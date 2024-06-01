@@ -19,7 +19,7 @@ curl -s https://raw.githubusercontent.com/aelpxy/dbctl/main/scripts/install.sh |
 ## Usage
 
 ```sh
-aelpxy@desktop:~$ dbctl
+❯ dbctl help
 
 A command-line tool designed to simplify the management of databases, including creating, deleting, and other operations.
 
@@ -32,8 +32,11 @@ Available Commands:
   create      Create a new database
   delete      Stop and delete a database
   help        Help about any command
+  inspect     Inspect a running database
   list        List all running databases
-  shell       Connect to a running container
+  logs        Stream live logs of a database
+  shell       Connect to a running database
+  version     Prints the current dbctl version
 
 Flags:
   -h, --help   help for dbctl
