@@ -25,4 +25,4 @@ const (
 )
 
 const DNSResolverAddress = "9.9.9.9:80"
-const Version = "1.1.1"
+const Version = "1.2.0"
