@@ -181,8 +181,10 @@ func createContainerForDB(dbType, name string, port int, password string, envVar
 }
 
 func printTable(dbType, imageTag string, port int, password, containerID string) {
+	// containerInfo, _ := docker.InspectContainer(containerID)
+
 	data := [][]string{
-		{"Container ID", containerID},
+		{"Container ID", containerID[:12]},
 		{"Database Type", dbType},
 		{"Image Tag", imageTag},
 		{"Port", strconv.Itoa(port)},
