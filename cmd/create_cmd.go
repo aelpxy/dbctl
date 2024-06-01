@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// todo add support for memory and cpu args
+// TODO: add support for memory and cpu args
 var createCmd = &cobra.Command{
 	Use:   "create <database-type>[:image-tag]",
 	Short: "Create a new database",
@@ -27,6 +27,7 @@ Supported database types:
 - mysql
 - mariadb
 - mongo
+- meilisearch
 
 You can optionally specify a custom image tag for the database.`,
 	Example: ` 
@@ -118,6 +119,11 @@ func getImageTag(dbType, imageVersion string) string {
 			return config.MongoImageTag
 		}
 		return fmt.Sprintf("mongo:%s", imageVersion)
+	case "meilisearch":
+		if imageVersion == "" {
+			return config.MeiliSearchImageTag
+		}
+		return fmt.Sprintf("getmeili:%s", imageVersion)
 	default:
 		log.Fatalf("Unsupported database type: %s", dbType)
 		return ""
@@ -167,6 +173,8 @@ func createContainerForDB(dbType, name string, port int, password string, envVar
 		return docker.CreateContainer(getImageTag("mariadb", ""), dbType, name, port, password, envVarArgs...)
 	case "mongo":
 		return docker.CreateContainer(getImageTag("mongo", ""), dbType, name, port, password, envVarArgs...)
+	case "meilisearch":
+		return docker.CreateContainer(getImageTag("meilisearch", ""), dbType, name, port, password, envVarArgs...)
 	default:
 		return "", fmt.Errorf("unsupported database type: %s", dbType)
 	}
@@ -205,5 +213,7 @@ func printConnectionString(dbType, password string, port int) {
 		fmt.Printf("Connection String: mariadb://root:%s@%s:%d/db\n", password, utils.GetIP(), port)
 	case "mongo":
 		fmt.Printf("Connection String: mongodb://root:%s@%s:%d/db?authSource=admin\n", password, utils.GetIP(), port)
+	case "meilisearch":
+		fmt.Printf("Connection String: %s:http://%s:%d \n", password, utils.GetIP(), port)
 	}
 }

@@ -45,6 +45,8 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 		internalPort = 3306
 	case "mongo":
 		internalPort = 27017
+	case "meilisearch":
+		internalPort = 7700
 	default:
 		return "", fmt.Errorf("unsupported database type: %s", dbType)
 	}
@@ -89,6 +91,11 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 			"MONGO_INITDB_ROOT_USERNAME=root",
 			"MONGO_INITDB_DATABASE=db",
 		)
+	case "meilisearch":
+		mountSource = config.DockerVolumeName + containerName
+		mountTarget = "/meili_data"
+
+		cmd = []string{"meilisearch", "--master-key", password}
 	default:
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/data"

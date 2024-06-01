@@ -55,7 +55,7 @@ func DeleteContainer(containerId string, deleteVolume bool) error {
 			time.Sleep(1 * time.Second)
 		}
 
-		// faily hacky solution
+		// fairly hacky solution
 		volumeName := config.DockerVolumeName + inspectedContainer.Name[len(fmt.Sprintf("/%s", config.DockerContainerPrefix)):]
 
 		fmt.Printf("Deleted volume %s\n", volumeName)
