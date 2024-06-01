@@ -47,6 +47,8 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 		internalPort = 27017
 	case "meilisearch":
 		internalPort = 7700
+	case "keydb":
+		internalPort = 6379
 	default:
 		return "", fmt.Errorf("unsupported database type: %s", dbType)
 	}
@@ -96,6 +98,11 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 		mountTarget = "/meili_data"
 
 		cmd = []string{"meilisearch", "--master-key", password}
+	case "keydb":
+		mountSource = config.DockerVolumeName + containerName
+		mountTarget = "/data"
+
+		cmd = []string{"keydb-server", "/etc/keydb/keydb.conf", "--appendonly", "yes", "--requirepass", password}
 	default:
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/data"

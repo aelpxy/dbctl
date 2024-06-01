@@ -28,6 +28,7 @@ Supported database types:
 - mariadb
 - mongo
 - meilisearch
+- keydb
 
 You can optionally specify a custom image tag for the database.`,
 	Example: ` 
@@ -124,6 +125,11 @@ func getImageTag(dbType, imageVersion string) string {
 			return config.MeiliSearchImageTag
 		}
 		return fmt.Sprintf("getmeili:%s", imageVersion)
+	case "keydb":
+		if imageVersion == "" {
+			return config.KeyDBImageTag
+		}
+		return fmt.Sprintf("eqalpha:%s", imageVersion)
 	default:
 		log.Fatalf("Unsupported database type: %s", dbType)
 		return ""
@@ -175,6 +181,8 @@ func createContainerForDB(dbType, name string, port int, password string, envVar
 		return docker.CreateContainer(getImageTag("mongo", ""), dbType, name, port, password, envVarArgs...)
 	case "meilisearch":
 		return docker.CreateContainer(getImageTag("meilisearch", ""), dbType, name, port, password, envVarArgs...)
+	case "keydb":
+		return docker.CreateContainer(getImageTag("keydb", ""), dbType, name, port, password, envVarArgs...)
 	default:
 		return "", fmt.Errorf("unsupported database type: %s", dbType)
 	}
@@ -217,5 +225,7 @@ func printConnectionString(dbType, password string, port int) {
 		fmt.Printf("Connection String: mongodb://root:%s@%s:%d/db?authSource=admin\n", password, utils.GetIP(), port)
 	case "meilisearch":
 		fmt.Printf("Connection String: %s:http://%s:%d \n", password, utils.GetIP(), port)
+	case "keydb":
+		fmt.Printf("Connection String: redis://default:%s@%s:%d\n", password, utils.GetIP(), port)
 	}
 }
