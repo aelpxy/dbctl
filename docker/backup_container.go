@@ -25,7 +25,7 @@ func BackupContainer(containerID, outputPath string) (string, error) {
 	case "postgres":
 		var postgresUser, postgresDB string
 
-		// loops through the `Config.Env` and splits them
+		//  NOTE: loops through the `Config.Env` and splits them
 		for _, envVar := range inspectedContainer.Config.Env {
 			pair := strings.SplitN(envVar, "=", 2)
 			if len(pair) == 2 {

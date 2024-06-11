@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// TODO:
+// TODO: add support for multiple databases
 var backupCmd = &cobra.Command{
 	Use:   "backup <container-id>",
 	Short: "Backup a database",
