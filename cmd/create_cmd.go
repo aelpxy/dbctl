@@ -189,8 +189,6 @@ func createContainerForDB(dbType, name string, port int, password string, envVar
 }
 
 func printTable(dbType, imageTag string, port int, password, containerID string) {
-	// containerInfo, _ := docker.InspectContainer(containerID)
-
 	data := [][]string{
 		{"Container ID", containerID[:12]},
 		{"Database Type", dbType},
@@ -224,7 +222,7 @@ func printConnectionString(dbType, password string, port int) {
 	case "mongo":
 		fmt.Printf("Connection String: mongodb://root:%s@%s:%d/db?authSource=admin\n", password, utils.GetIP(), port)
 	case "meilisearch":
-		fmt.Printf("Connection String: %s:http://%s:%d \n", password, utils.GetIP(), port)
+		fmt.Printf("Connection String: http://%s:%d@%s \n", utils.GetIP(), port, password)
 	case "keydb":
 		fmt.Printf("Connection String: redis://default:%s@%s:%d\n", password, utils.GetIP(), port)
 	}

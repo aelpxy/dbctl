@@ -19,11 +19,13 @@ dbctl delete container-id --volume true
 	Run: func(cmd *cobra.Command, args []string) {
 		containerID := args[0]
 		deleteVolume, err := cmd.Flags().GetBool("volume")
+
 		if err != nil {
 			log.Fatalf("Error getting volume flag: %v", err)
 		}
 
 		err = docker.DeleteContainer(containerID, deleteVolume)
+
 		if err != nil {
 			log.Fatalf("error deleting container: %v", err)
 		}
