@@ -3,12 +3,12 @@ package config
 var SupportedDatabases = []string{"redis", "postgres", "mysql", "mariadb", "mongo", "meilisearch", "keydb"}
 
 const (
-	RedisImageTag       string = "redis:7.2.5-alpine"
+	RedisImageTag       string = "redis:7.4-rc2-alpine"
 	PostgresImageTag    string = "postgres:16.3-alpine3.20"
-	MySQLImageTag       string = "mysql:8.4.0"
-	MariaDBImageTag     string = "mariadb:11.3.2-jammy"
+	MySQLImageTag       string = "mysql:8.4.1"
+	MariaDBImageTag     string = "mariadb:11.2.4-jammy"
 	MongoImageTag       string = "mongo:8.0.0-rc5-jammy"
-	MeiliSearchImageTag string = "getmeili/meilisearch:v1.8"
+	MeiliSearchImageTag string = "getmeili/meilisearch:v1.9.0"
 	KeyDBImageTag       string = "eqalpha/keydb:latest"
 	VoidImageTag        string = "zotehq/void:alpine"
 )
