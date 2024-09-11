@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -178,6 +179,16 @@ func createContainerForDB(dbType, name string, port int, password string, envVar
 	case "mariadb":
 		return docker.CreateContainer(getImageTag("mariadb", ""), dbType, name, port, password, envVarArgs...)
 	case "mongo":
+
+		// check if system is arm64 or arm
+		if runtime.GOARCH == "arm" {
+			log.Panic("MongoDB does not work on arm systems")
+		}
+
+		if runtime.GOARCH == "arm64" {
+			log.Panic("MongoDB does not work on arm64 systems")
+		}
+
 		return docker.CreateContainer(getImageTag("mongo", ""), dbType, name, port, password, envVarArgs...)
 	case "meilisearch":
 		return docker.CreateContainer(getImageTag("meilisearch", ""), dbType, name, port, password, envVarArgs...)
