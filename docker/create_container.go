@@ -50,7 +50,7 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 	case "keydb":
 		internalPort = 6379
 	case "couchdb":
-		internalPort = 9100 // *NOTE: placeholder for now
+		internalPort = 5984 // *NOTE: placeholder for now
 	case "clickhouse":
 		internalPort = 9000
 	default:
@@ -107,7 +107,15 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 		mountTarget = "/data"
 
 		cmd = []string{"keydb-server", "/etc/keydb/keydb.conf", "--appendonly", "yes", "--requirepass", password}
+	case "couchdb":
+		mountSource = config.DockerVolumeName + containerName
+		mountTarget = "/opt/couchdb/data"
 
+		containerConfig.Env = append(containerConfig.Env,
+			"COUCHDB_USER=root",
+			"COUCHDB_PASSWORD="+password,
+			"COUCHDB_SECRET="+password,
+		)
 	case "clickhouse":
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/var/lib/clickhouse"
@@ -117,7 +125,7 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 			"CLICKHOUSE_USER=root",
 			"CLICKHOUSE_PASSWORD="+password,
 			"CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1",
-		)
+		) // TODO: Multiple ports
 	default:
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/data"

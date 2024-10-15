@@ -131,6 +131,11 @@ func getImageTag(dbType, imageVersion string) string {
 			return config.KeyDBImageTag
 		}
 		return fmt.Sprintf("eqalpha:%s", imageVersion)
+	case "couchdb":
+		if imageVersion == "" {
+			return config.CouchDbTag
+		}
+		return fmt.Sprintf("couchdb:%s", imageVersion)
 	default:
 		log.Fatalf("Unsupported database type: %s", dbType)
 		return ""
@@ -194,6 +199,8 @@ func createContainerForDB(dbType, name string, port int, password string, envVar
 		return docker.CreateContainer(getImageTag("meilisearch", ""), dbType, name, port, password, envVarArgs...)
 	case "keydb":
 		return docker.CreateContainer(getImageTag("keydb", ""), dbType, name, port, password, envVarArgs...)
+	case "couchdb":
+		return docker.CreateContainer(getImageTag("couchdb", ""), dbType, name, port, password, envVarArgs...)
 	default:
 		return "", fmt.Errorf("unsupported database type: %s", dbType)
 	}
@@ -236,5 +243,7 @@ func printConnectionString(dbType, password string, port int) {
 		fmt.Printf("Connection String: http://%s:%d@%s \n", utils.GetIP(), port, password)
 	case "keydb":
 		fmt.Printf("Connection String: redis://default:%s@%s:%d\n", password, utils.GetIP(), port)
+	case "couchdb":
+		fmt.Printf("Connection String: http://root:%s@%s:%d\n", password, utils.GetIP(), port)
 	}
 }
