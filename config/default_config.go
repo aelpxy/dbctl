@@ -1,6 +1,6 @@
 package config
 
-var SupportedDatabases = []string{"redis", "postgres", "mysql", "mariadb", "mongo", "meilisearch", "keydb"}
+var SupportedDatabases = []string{"redis", "postgres", "mysql", "mariadb", "mongo", "meilisearch", "keydb", "couchdb", "clickhouse"}
 
 const (
 	RedisImageTag       string = "redis:7.4-rc2-alpine"
@@ -11,6 +11,8 @@ const (
 	MeiliSearchImageTag string = "getmeili/meilisearch:v1.9.0"
 	KeyDBImageTag       string = "eqalpha/keydb:latest"
 	VoidImageTag        string = "zotehq/void:alpine"
+	CouchDbTag          string = "couchdb:3.4.1"
+	ClickHouseTag       string = "clickhouse/clickhouse-server:24.3.12-alpine"
 )
 
 const (

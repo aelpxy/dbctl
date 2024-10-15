@@ -49,6 +49,10 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 		internalPort = 7700
 	case "keydb":
 		internalPort = 6379
+	case "couchdb":
+		internalPort = 9100 // *NOTE: placeholder for now
+	case "clickhouse":
+		internalPort = 9000
 	default:
 		return "", fmt.Errorf("unsupported database type: %s", dbType)
 	}
@@ -103,6 +107,17 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 		mountTarget = "/data"
 
 		cmd = []string{"keydb-server", "/etc/keydb/keydb.conf", "--appendonly", "yes", "--requirepass", password}
+
+	case "clickhouse":
+		mountSource = config.DockerVolumeName + containerName
+		mountTarget = "/var/lib/clickhouse"
+
+		containerConfig.Env = append(containerConfig.Env,
+			"CLICKHOUSE_DB=db",
+			"CLICKHOUSE_USER=root",
+			"CLICKHOUSE_PASSWORD="+password,
+			"CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1",
+		)
 	default:
 		mountSource = config.DockerVolumeName + containerName
 		mountTarget = "/data"
