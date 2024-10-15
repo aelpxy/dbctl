@@ -3,14 +3,13 @@ package config
 var SupportedDatabases = []string{"redis", "postgres", "mysql", "mariadb", "mongo", "meilisearch", "keydb", "couchdb", "clickhouse"}
 
 const (
-	RedisImageTag       string = "redis:7.4-rc2-alpine"
-	PostgresImageTag    string = "postgres:16.3-alpine3.20"
-	MySQLImageTag       string = "mysql:8.4.1"
-	MariaDBImageTag     string = "mariadb:11.2.4-jammy"
-	MongoImageTag       string = "mongo:8.0.0-rc5-jammy"
-	MeiliSearchImageTag string = "getmeili/meilisearch:v1.9.0"
+	RedisImageTag       string = "redis:7.4.1-alpine3.20"
+	PostgresImageTag    string = "postgres:16.4-alpine3.20"
+	MySQLImageTag       string = "mysql:9.0.1"
+	MariaDBImageTag     string = "mariadb:11.2.5-jammy"
+	MongoImageTag       string = "mongo:8.0.1-noble"
+	MeiliSearchImageTag string = "getmeili/meilisearch:v1.10.3"
 	KeyDBImageTag       string = "eqalpha/keydb:latest"
-	VoidImageTag        string = "zotehq/void:alpine"
 	CouchDbTag          string = "couchdb:3.4.1"
 	ClickHouseTag       string = "clickhouse/clickhouse-server:24.3.12-alpine"
 )
