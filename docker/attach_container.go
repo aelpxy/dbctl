@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 )
 
@@ -38,7 +37,7 @@ func ShellConnect(containerID string) error {
 
 	defer out.Close()
 
-	exec, err := dockerClient.ContainerExecCreate(context.Background(), inspectedContainer.ID, types.ExecConfig{
+	exec, err := dockerClient.ContainerExecCreate(context.Background(), inspectedContainer.ID, container.ExecOptions{
 		Cmd:          []string{"sh", "-c", "TERM=xterm-256color; export TERM; exec /bin/sh -i"},
 		AttachStdin:  true,
 		AttachStdout: true,
@@ -50,7 +49,7 @@ func ShellConnect(containerID string) error {
 		return fmt.Errorf("error creating exec in container: %w", err)
 	}
 
-	execObj, err := dockerClient.ContainerExecAttach(context.Background(), exec.ID, types.ExecStartCheck{})
+	execObj, err := dockerClient.ContainerExecAttach(context.Background(), exec.ID, container.ExecStartOptions{})
 
 	if err != nil {
 		return fmt.Errorf("error attaching to exec in container: %w", err)

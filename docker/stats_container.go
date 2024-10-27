@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 )
 
 type ContainerStats struct {
@@ -30,7 +30,7 @@ func GetContainerStats(containerId string) (*ContainerStats, error) {
 	}
 	defer stats.Body.Close()
 
-	var containerStats types.StatsJSON
+	var containerStats container.StatsResponse
 
 	err = json.NewDecoder(stats.Body).Decode(&containerStats)
 

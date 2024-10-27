@@ -50,7 +50,7 @@ func CreateContainer(imageName, dbType, containerName string, externalPort int, 
 	case "keydb":
 		internalPort = 6379
 	case "couchdb":
-		internalPort = 5984 // *NOTE: placeholder for now
+		internalPort = 5984
 	case "clickhouse":
 		internalPort = 9000
 	default:

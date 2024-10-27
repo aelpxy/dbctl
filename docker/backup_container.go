@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 )
 
 func BackupContainer(containerID, outputPath string) (string, error) {
@@ -38,7 +38,7 @@ func BackupContainer(containerID, outputPath string) (string, error) {
 			}
 		}
 
-		exec, err := docker.ContainerExecCreate(context.Background(), containerID, types.ExecConfig{
+		exec, err := docker.ContainerExecCreate(context.Background(), containerID, container.ExecOptions{
 			Cmd:          []string{"pg_dump", "-U", postgresUser, "-f", "backup.sql", postgresDB},
 			AttachStdout: true,
 		})
@@ -47,7 +47,7 @@ func BackupContainer(containerID, outputPath string) (string, error) {
 			return "", err
 		}
 
-		resp, err := docker.ContainerExecAttach(context.Background(), exec.ID, types.ExecStartCheck{
+		resp, err := docker.ContainerExecAttach(context.Background(), exec.ID, container.ExecStartOptions{
 			Detach: false,
 			Tty:    false,
 		})

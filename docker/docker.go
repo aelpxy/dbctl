@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/aelpxy/dbctl/config"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
 
@@ -21,11 +21,11 @@ func DockerClient() (*client.Client, error) {
 		return nil, err
 	}
 
-	_, err = apiClient.NetworkInspect(Ctx, config.DockerNetworkName, types.NetworkInspectOptions{})
+	_, err = apiClient.NetworkInspect(Ctx, config.DockerNetworkName, network.InspectOptions{})
 
 	// basically checks if `config.DockerNetworkName` exists otherwise creates
 	if err != nil {
-		_, err = apiClient.NetworkCreate(Ctx, config.DockerNetworkName, types.NetworkCreate{})
+		_, err = apiClient.NetworkCreate(Ctx, config.DockerNetworkName, network.CreateOptions{})
 
 		if err != nil {
 			log.Fatalln(fmt.Errorf("error creating docker network: %w", err))

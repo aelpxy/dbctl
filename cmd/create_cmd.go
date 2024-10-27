@@ -164,6 +164,10 @@ func getEnvVarsForDB(dbType, password string) []string {
 		return []string{
 			fmt.Sprintf("MONGO_INITDB_ROOT_PASSWORD=%s", password),
 		}
+	case "couchdb":
+		return []string{
+			fmt.Sprintf("COUCHDB_PASSWORD=%s", password),
+		}
 	default:
 		return []string{}
 	}
