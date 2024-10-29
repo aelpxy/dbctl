@@ -20,7 +20,7 @@ dbctl delete container-id --v true
 	Run: func(cmd *cobra.Command, args []string) {
 		containerId := args[0]
 
-		deleteVolume, err := cmd.Flags().GetBool("v")
+		deleteVolume, err := cmd.Flags().GetBool("f")
 
 		if err != nil {
 			log.Fatalf("Error getting volume flag: %v", err)
@@ -37,7 +37,7 @@ dbctl delete container-id --v true
 }
 
 func init() {
-	deleteCmd.Flags().BoolP("volume", "v", false, "Delete the associated volume")
+	deleteCmd.Flags().BoolP("force", "f", true, "Delete the associated volume")
 
 	rootCmd.AddCommand(deleteCmd)
 }
