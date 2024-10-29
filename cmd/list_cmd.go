@@ -15,9 +15,9 @@ import (
 )
 
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all running databases",
-	Long:  "List all running databases managed by dbctl",
+	Use:     "ls",
+	Short:   "List all running databases",
+	Aliases: []string{"list"},
 	Run: func(cmd *cobra.Command, args []string) {
 		listDatabases()
 	},
@@ -29,6 +29,7 @@ func init() {
 
 func listDatabases() {
 	dockerClient, err := docker.DockerClient()
+
 	if err != nil {
 		log.Fatalf("error creating Docker client: %v", err)
 	}

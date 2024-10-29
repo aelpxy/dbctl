@@ -14,10 +14,10 @@ import (
 )
 
 var inspectCmd = &cobra.Command{
-	Use:   "inspect <container-id>",
-	Short: "Inspect a running database",
-	Long:  "Inspect a running database managed by dbctl",
-	Args:  cobra.ExactArgs(1),
+	Use:     "inspect <container-id>",
+	Short:   "Inspect a running database",
+	Aliases: []string{"show"},
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		inspectDatabase(args[0])
 	},

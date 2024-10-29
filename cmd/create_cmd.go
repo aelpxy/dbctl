@@ -20,23 +20,12 @@ import (
 var createCmd = &cobra.Command{
 	Use:   "create <database-type>[:image-tag]",
 	Short: "Create a new database",
-	Long: `Create a new database using the provided options
-
-Supported database types:
-- postgres
-- redis
-- mysql
-- mariadb
-- mongo
-- meilisearch
-- keydb
-
-You can optionally specify a custom image tag for the database.`,
 	Example: ` 
 dbctl create postgres
-dbctl create redis:7.2.6-alpine
+dbctl create redis:latest
 dbctl create mysql --password mypassword --port 3306 --name mydb`,
-	Args: cobra.ExactArgs(1),
+	Aliases: []string{"mk"},
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		password, _ := cmd.Flags().GetString("password")
 		port, _ := cmd.Flags().GetInt("port")
@@ -47,9 +36,9 @@ dbctl create mysql --password mypassword --port 3306 --name mydb`,
 }
 
 func init() {
-	createCmd.Flags().StringP("password", "P", "", "Specify a custom password for the database")
-	createCmd.Flags().IntP("port", "p", 0, "Specify a custom port for the database (default: random port)")
-	createCmd.Flags().StringP("name", "n", "", "Specify a custom name for the database (default: generated name)")
+	createCmd.Flags().StringP("password", "P", "", "Specify a custom password for the database.")
+	createCmd.Flags().IntP("port", "p", 0, "Specify a custom port for the database (default: random port).")
+	createCmd.Flags().StringP("name", "n", "", "Specify a custom name for the database (default: generated name).")
 
 	rootCmd.AddCommand(createCmd)
 }

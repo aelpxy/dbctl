@@ -13,6 +13,7 @@ import (
 
 func DeleteContainer(containerId string, deleteVolume bool) error {
 	dockerClient, err := DockerClient()
+
 	if err != nil {
 		return fmt.Errorf("error creating docker client: %w", err)
 	}

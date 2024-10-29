@@ -8,8 +8,8 @@ import (
 var logsCmd = &cobra.Command{
 	Use:     "logs <container-id>",
 	Short:   "Stream live logs of a database",
-	Long:    "This command streams the live logs of a database container",
 	Example: "dbctl logs container-id",
+	Aliases: []string{"tail"},
 	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		streamLogs(args[0])

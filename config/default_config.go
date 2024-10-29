@@ -1,6 +1,16 @@
 package config
 
-var SupportedDatabases = []string{"redis", "postgres", "mysql", "mariadb", "mongo", "meilisearch", "keydb", "couchdb", "clickhouse"}
+var SupportedDatabases = []string{
+	"redis",
+	"postgres",
+	"mysql",
+	"mariadb",
+	"mongo",
+	"meilisearch",
+	"keydb",
+	"couchdb",
+	"clickhouse",
+}
 
 const (
 	RedisImageTag       string = "redis:7.4.1-alpine3.20"

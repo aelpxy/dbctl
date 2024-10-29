@@ -7,14 +7,10 @@ import (
 
 // TODO: add support for multiple databases
 var backupCmd = &cobra.Command{
-	Use:   "backup <container-id>",
-	Short: "Backup a database",
-	Long: `Backup a database using its id
-
-Supported database types:
-- postgres
-- redis`,
-	Args: cobra.ExactArgs(1),
+	Use:     "backup <container-id>",
+	Short:   "Backup a database",
+	Args:    cobra.ExactArgs(1),
+	Aliases: []string{"cp"},
 	Run: func(cmd *cobra.Command, args []string) {
 		output, _ := cmd.Flags().GetString("output")
 
@@ -23,7 +19,7 @@ Supported database types:
 }
 
 func init() {
-	backupCmd.Flags().StringP("output", "o", "", "Specify a output path for the database")
+	backupCmd.Flags().StringP("output", "o", "", "Specify a output path for the database backup.")
 
 	rootCmd.AddCommand(backupCmd)
 }

@@ -9,28 +9,30 @@ import (
 )
 
 var deleteCmd = &cobra.Command{
-	Use:   "delete <container-id>",
-	Short: "Stop and delete a database",
-	Long:  "This command stops and removes a database container",
+	Use:     "delete <container-id>",
+	Short:   "Stop and delete a database",
+	Long:    "This command stops and removes a database container",
+	Aliases: []string{"rm"},
 	Example: `dbctl delete container-id
-dbctl delete container-id --volume true
+dbctl delete container-id --v true
 	`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		containerID := args[0]
-		deleteVolume, err := cmd.Flags().GetBool("volume")
+		containerId := args[0]
+
+		deleteVolume, err := cmd.Flags().GetBool("v")
 
 		if err != nil {
 			log.Fatalf("Error getting volume flag: %v", err)
 		}
 
-		err = docker.DeleteContainer(containerID, deleteVolume)
+		err = docker.DeleteContainer(containerId, deleteVolume)
 
 		if err != nil {
 			log.Fatalf("error deleting container: %v", err)
 		}
 
-		fmt.Printf("Container %s has been deleted.\n", containerID)
+		fmt.Printf("Container %s has been deleted.\n", containerId)
 	},
 }
 
