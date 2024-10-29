@@ -1,8 +1,6 @@
 module github.com/aelpxy/dbctl
 
-go 1.22
-
-toolchain go1.23.1
+go 1.23
 
 require (
 	github.com/briandowns/spinner v1.23.1

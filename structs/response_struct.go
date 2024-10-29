@@ -1,5 +1,7 @@
 package structs
 
 type Response struct {
-	Message string `json:"message"`
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+	Data    []any  `json:"data,omitempty"`
 }

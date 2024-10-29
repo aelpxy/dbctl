@@ -28,13 +28,15 @@ Usage:
   dbctl [command]
 
 Available Commands:
+  backup      Backup a database
   completion  Generate the autocompletion script for the specified shell
   create      Create a new database
   delete      Stop and delete a database
   help        Help about any command
+  http        Start the API and serve it
   inspect     Inspect a running database
-  list        List all running databases
   logs        Stream live logs of a database
+  ls          List all running databases
   shell       Connect to a running database
   version     Prints the current dbctl version
 
