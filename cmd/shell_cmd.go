@@ -2,21 +2,20 @@ package cmd
 
 import (
 	"fmt"
-	"time"
+	"os"
 
 	"github.com/aelpxy/dbctl/docker"
-	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 )
 
 var shellCmd = &cobra.Command{
 	Use:     "shell <container-id>",
-	Short:   "Connect to a running database",
+	Short:   "Connect to a running database container",
 	Example: "dbctl shell container-id",
-	Aliases: []string{"enter"},
+	Aliases: []string{"enter", "sh", "connect"},
 	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		connectToContainer(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return connectToContainer(args[0])
 	},
 }
 
@@ -24,11 +23,11 @@ func init() {
 	rootCmd.AddCommand(shellCmd)
 }
 
-func connectToContainer(containerId string) {
-	spinner := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
-	spinner.Suffix = fmt.Sprintf("Connecting to %s... \n", containerId)
-	spinner.Color("green")
-	spinner.Start()
+func connectToContainer(containerID string) error {
+	if err := docker.ShellConnect(containerID); err != nil {
+		fmt.Fprintf(os.Stderr, "Error connecting to container: %v\n", err)
+		return err
+	}
 
-	docker.ShellConnect(containerId)
+	return nil
 }
