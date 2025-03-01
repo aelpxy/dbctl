@@ -1,0 +1,26 @@
+{
+  "name": "dbctl",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "bundle": "bun build --compile --minify --sourcemap ./src/index.ts --outfile dbctl"
+  },
+  "author": "aelpxy <aelpxy@protonmail.com>",
+  "license": "MIT",
+  "keywords": [],
+  "packageManager": "pnpm@10.5.2",
+  "dependencies": {
+    "commander": "^13.1.0",
+    "dockerode": "^4.0.4"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/dockerode": "^3.3.35"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
