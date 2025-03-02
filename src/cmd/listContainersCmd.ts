@@ -43,6 +43,6 @@ export async function listContainersCmd({
 
     console.info(JSON.stringify(filteredContainers));
   } catch (error) {
-    console.error(error);
+    process.exit(1);
   }
 }
