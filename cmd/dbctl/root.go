@@ -28,6 +28,7 @@ func (a *app) newRootCmd() *cobra.Command {
 
 	root.AddCommand(
 		a.newBackupCmd(),
+		a.newConnectCmd(),
 		a.newCreateCmd(),
 		a.newDeleteCmd(),
 		a.newHTTPCmd(),

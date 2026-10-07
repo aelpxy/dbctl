@@ -16,7 +16,7 @@ func (a *app) newShellCmd() *cobra.Command {
 		Use:     "shell [name-or-id]",
 		Short:   "Open the database client, or a shell with --sh",
 		Example: "  dbctl shell misty-river-bold-pine\n  dbctl shell misty-river-bold-pine --sh",
-		Aliases: []string{"enter", "sh", "connect"},
+		Aliases: []string{"enter", "sh"},
 		Args:    cobra.MaximumNArgs(1),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			id, err := databaseArg(ctx, c, args, "Open a client for which database?")
