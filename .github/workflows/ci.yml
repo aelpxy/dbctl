@@ -37,7 +37,12 @@ jobs:
         with:
           go-version-file: go.mod
       - run: go mod tidy -diff
-      - run: CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" ./...
+      - name: Build release targets
+        run: |
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
+            echo "building $target"
+            GOOS=${target%/*} GOARCH=${target#*/} CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /dev/null ./...
+          done
 
   vulncheck:
     runs-on: ubuntu-latest

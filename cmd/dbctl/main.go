@@ -8,7 +8,6 @@ import (
 	"os/signal"
 
 	"github.com/aelpxy/dbctl/internal/database"
-	"golang.org/x/sys/unix"
 )
 
 func main() {
@@ -16,7 +15,7 @@ func main() {
 }
 
 func run() int {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, unix.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), shutdownSignals()...)
 	defer stop()
 
 	databases, err := database.Load()
