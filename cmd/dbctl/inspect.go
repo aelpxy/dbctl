@@ -1,12 +1,10 @@
 package main
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 
 	"github.com/aelpxy/dbctl/internal/docker"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +12,7 @@ func (a *app) newInspectCmd() *cobra.Command {
 	var output *outputFormat
 
 	cmd := &cobra.Command{
-		Use:     "inspect <container-id>",
+		Use:     "inspect <name-or-id>",
 		Short:   "Inspect a database",
 		Aliases: []string{"show"},
 		Args:    cobra.ExactArgs(1),
@@ -46,24 +44,17 @@ func runInspect(ctx context.Context, c *docker.Client, id string, output *output
 		return writeJSON(out)
 	}
 
-	table := newTable("Field", "Value")
-	table.SetColumnColor(
-		tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiBlueColor},
-		tablewriter.Colors{tablewriter.FgHiGreenColor, tablewriter.Bold},
-	)
-	table.AppendBulk([][]string{
-		{"ID", shortID(db.ID)},
-		{"Name", db.Name},
-		{"Type", typeName(db.Type)},
+	printOut(accent(db.Name) + "  " + muted(typeName(db.Type)+" · "+shortID(db.ID)))
+	printOut("")
+	printOut(keyValues([][2]string{
+		{"Status", status(db.State)},
+		{"Health", health(db.Health)},
 		{"Image", db.Image},
-		{"Status", db.State},
-		{"Health", cmp.Or(db.Health, "none")},
-		{"CPU Usage", fmt.Sprintf("%.2f%%", stats.CPUPercent)},
-		{"Memory Usage", fmt.Sprintf("%.2f MB / %.2f MB", stats.MemoryUsageMB(), stats.MemoryLimitMB())},
+		{"CPU", fmt.Sprintf("%.2f%%", stats.CPUPercent)},
+		{"Memory", fmt.Sprintf("%.1f MB %s %.1f MB", stats.MemoryUsageMB(), muted("of"), stats.MemoryLimitMB())},
 		{"Ports", formatPorts(db.Ports)},
 		{"Volumes", formatVolumes(db.Volumes)},
-	})
-	table.Render()
+	}))
 
 	return nil
 }

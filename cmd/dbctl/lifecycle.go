@@ -12,7 +12,6 @@ type lifecycleAction struct {
 	run   func(ctx context.Context, c *docker.Client, id string) error
 	use   string
 	short string
-	verb  string
 	done  string
 }
 
@@ -21,8 +20,7 @@ func (a *app) newStartCmd() *cobra.Command {
 		run:   func(ctx context.Context, c *docker.Client, id string) error { return c.Start(ctx, id) },
 		use:   "start",
 		short: "Start one or more stopped databases",
-		verb:  "Starting",
-		done:  "started",
+		done:  "Started",
 	})
 }
 
@@ -31,8 +29,7 @@ func (a *app) newStopCmd() *cobra.Command {
 		run:   func(ctx context.Context, c *docker.Client, id string) error { return c.Stop(ctx, id) },
 		use:   "stop",
 		short: "Stop one or more databases without deleting them",
-		verb:  "Stopping",
-		done:  "stopped",
+		done:  "Stopped",
 	})
 }
 
@@ -41,14 +38,13 @@ func (a *app) newRestartCmd() *cobra.Command {
 		run:   func(ctx context.Context, c *docker.Client, id string) error { return c.Restart(ctx, id) },
 		use:   "restart",
 		short: "Restart one or more databases",
-		verb:  "Restarting",
-		done:  "restarted",
+		done:  "Restarted",
 	})
 }
 
 func (a *app) newLifecycleCmd(action *lifecycleAction) *cobra.Command {
 	return &cobra.Command{
-		Use:   action.use + " <container-id>...",
+		Use:   action.use + " <name-or-id>...",
 		Short: action.short,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
@@ -64,16 +60,10 @@ func (a *app) newLifecycleCmd(action *lifecycleAction) *cobra.Command {
 }
 
 func runLifecycle(ctx context.Context, c *docker.Client, id string, action *lifecycleAction) error {
-	s := startSpinner(action.verb + " database " + id + "...")
-	err := action.run(ctx, c, id)
-
-	s.Stop()
-
+	err := step(action.done+" "+bold(id), func() error { return action.run(ctx, c, id) })
 	if err != nil {
 		return fmt.Errorf("%s database %s: %w", action.use, id, err)
 	}
-
-	fmt.Printf("Database %s has been %s.\n", id, action.done)
 
 	return nil
 }

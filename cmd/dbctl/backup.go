@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/aelpxy/dbctl/internal/database"
@@ -20,9 +19,9 @@ func (a *app) newBackupCmd() *cobra.Command {
 	output := ""
 
 	cmd := &cobra.Command{
-		Use:     "backup <container-id>",
+		Use:     "backup <name-or-id>",
 		Short:   "Backup a database",
-		Example: "  dbctl backup container-id\n  dbctl backup container-id -o backup.sql",
+		Example: "  dbctl backup misty-river-bold-pine\n  dbctl backup misty-river-bold-pine -o backup.sql",
 		Aliases: []string{"cp"},
 		Args:    cobra.ExactArgs(1),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
@@ -31,7 +30,7 @@ func (a *app) newBackupCmd() *cobra.Command {
 				return err
 			}
 
-			fmt.Printf("Backup saved to %s\n", path)
+			printOut(hintLine("Restore it with " + accent("dbctl restore "+args[0]+" "+path)))
 
 			return nil
 		}),
@@ -72,7 +71,8 @@ func (a *app) runBackup(ctx context.Context, c *docker.Client, id, output string
 		}
 	}()
 
-	if err := c.Backup(ctx, db.ID, f); err != nil {
+	err = step("Backed up "+bold(db.Name)+" to "+bold(path), func() error { return c.Backup(ctx, db.ID, f) })
+	if err != nil {
 		return "", fmt.Errorf("back up database %s: %w", id, err)
 	}
 
@@ -80,7 +80,5 @@ func (a *app) runBackup(ctx context.Context, c *docker.Client, id, output string
 }
 
 func backupFileName(db *docker.Database, def *database.Definition) string {
-	name := strings.TrimPrefix(db.Name, docker.ContainerPrefix)
-
-	return name + "-" + time.Now().Format(backupTimeFormat) + "." + def.BackupExtension()
+	return db.Name + "-" + time.Now().Format(backupTimeFormat) + "." + def.BackupExtension()
 }

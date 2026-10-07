@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/aelpxy/dbctl/internal/docker"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -44,28 +43,20 @@ func runList(ctx context.Context, c *docker.Client, output *outputFormat) error 
 	}
 
 	if len(dbs) == 0 {
-		fmt.Println("No databases found.")
+		printOut("No databases yet.")
+		printOut(hintLine("Create one with " + accent("dbctl create postgres")))
 
 		return nil
 	}
 
-	table := newTable("ID", "Name", "Type", "Image", "Status")
+	t := newTable("Name", "Type", "Status", "Uptime", "ID")
 
 	for i := range dbs {
 		db := &dbs[i]
-		table.Rich(
-			[]string{shortID(db.ID), db.Name, typeName(db.Type), db.Image, db.Status},
-			[]tablewriter.Colors{
-				{tablewriter.FgGreenColor, tablewriter.Bold},
-				{tablewriter.FgBlueColor, tablewriter.Bold},
-				{},
-				{tablewriter.FgGreenColor},
-				statusColor(db.State),
-			},
-		)
+		t.Row(bold(db.Name), typeName(db.Type), status(db.State), muted(db.Status), muted(shortID(db.ID)))
 	}
 
-	table.Render()
+	printOut(t.Render())
 
 	return nil
 }

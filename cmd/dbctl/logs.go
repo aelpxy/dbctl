@@ -13,9 +13,9 @@ func (a *app) newLogsCmd() *cobra.Command {
 	opts := docker.LogsOptions{Stdout: os.Stdout, Stderr: os.Stderr}
 
 	cmd := &cobra.Command{
-		Use:     "logs <container-id>",
+		Use:     "logs <name-or-id>",
 		Short:   "Stream live logs of a database",
-		Example: "  dbctl logs container-id\n  dbctl logs container-id --tail 100 --follow=false",
+		Example: "  dbctl logs misty-river-bold-pine\n  dbctl logs misty-river-bold-pine --tail 100 --follow=false",
 		Aliases: []string{"tail"},
 		Args:    cobra.ExactArgs(1),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {

@@ -15,9 +15,9 @@ const restoreArgCount = 2
 
 func (a *app) newRestoreCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:     "restore <container-id> <backup-file>",
+		Use:     "restore <name-or-id> <backup-file>",
 		Short:   "Restore a database from a backup file",
-		Example: "  dbctl restore container-id misty-river-bold-pine-20261007-120000.sql",
+		Example: "  dbctl restore misty-river-bold-pine misty-river-bold-pine-20261007-120000.sql",
 		Args:    cobra.ExactArgs(restoreArgCount),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			return a.runRestore(ctx, c, args[0], args[1])
@@ -47,16 +47,10 @@ func (a *app) runRestore(ctx context.Context, c *docker.Client, id, path string)
 
 	defer func() { _ = f.Close() }()
 
-	s := startSpinner("Restoring " + path + " into " + db.Name + "...")
-	err = c.Restore(ctx, db.ID, f)
-
-	s.Stop()
-
+	err = step("Restored "+bold(path)+" into "+bold(db.Name), func() error { return c.Restore(ctx, db.ID, f) })
 	if err != nil {
 		return fmt.Errorf("restore database %s: %w", id, err)
 	}
-
-	fmt.Printf("Restored %s into %s\n", path, db.Name)
 
 	return nil
 }

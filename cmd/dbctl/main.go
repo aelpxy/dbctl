@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 
@@ -20,7 +19,7 @@ func run() int {
 
 	databases, err := database.Load()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
+		printError(err)
 
 		return 1
 	}
@@ -28,6 +27,8 @@ func run() int {
 	a := &app{databases: databases}
 
 	if err := a.newRootCmd().ExecuteContext(ctx); err != nil {
+		printError(err)
+
 		return 1
 	}
 

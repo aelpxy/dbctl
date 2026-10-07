@@ -40,7 +40,7 @@ func (a *app) newCreateCmd() *cobra.Command {
   dbctl create mysql --password mypassword --port 3306 --name mydb
   dbctl create pgvector -o json`,
 		Aliases:   []string{"mk"},
-		Args:      cobra.ExactArgs(1),
+		Args:      cobra.MatchAll(cobra.ExactArgs(1), a.validDatabaseArg),
 		ValidArgs: a.databases.Names(),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			return a.runCreate(ctx, c, args[0], &opts)
@@ -55,6 +55,15 @@ func (a *app) newCreateCmd() *cobra.Command {
 	opts.output = addOutputFlag(cmd)
 
 	return cmd
+}
+
+// validDatabaseArg rejects unknown database types before connecting to docker.
+func (a *app) validDatabaseArg(_ *cobra.Command, args []string) error {
+	if _, _, err := a.databases.Parse(args[0]); err != nil {
+		return fmt.Errorf("parse database type: %w", err)
+	}
+
+	return nil
 }
 
 func (a *app) runCreate(ctx context.Context, c *docker.Client, arg string, opts *createOptions) error {
@@ -76,13 +85,20 @@ func (a *app) runCreate(ctx context.Context, c *docker.Client, arg string, opts 
 		return err
 	}
 
-	s := startSpinner("Creating " + create.Name + " database...")
-	id, err := c.Create(ctx, create)
+	var id string
 
-	s.Stop()
+	err = step("Created "+bold(create.Name), func() error {
+		var err error
 
+		id, err = c.Create(ctx, create)
+		if err != nil {
+			return fmt.Errorf("create database: %w", err)
+		}
+
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("create database: %w", err)
+		return err
 	}
 
 	if opts.wait {
@@ -125,20 +141,15 @@ func pullImage(ctx context.Context, c *docker.Client, image string) error {
 	}
 
 	if exists {
-		progressf("Image %s already exists, skipping pull\n", image)
+		printErr(successLine("Using " + bold(image) + " " + muted("cached")))
 
 		return nil
 	}
 
-	s := startSpinner("Pulling " + image + "...")
-	defer s.Stop()
-
-	if err := c.Pull(ctx, image); err != nil {
+	err = step("Pulled "+bold(image), func() error { return c.Pull(ctx, image) })
+	if err != nil {
 		return fmt.Errorf("pull image: %w", err)
 	}
-
-	s.Stop()
-	progressf("Image %s pulled successfully\n", image)
 
 	return nil
 }
@@ -147,12 +158,7 @@ func waitReady(ctx context.Context, c *docker.Client, id string, timeout time.Du
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	s := startSpinner("Waiting for the database to be ready...")
-	err := c.WaitReady(ctx, id)
-
-	s.Stop()
-
-	if err != nil {
+	if err := step("Ready to accept connections", func() error { return c.WaitReady(ctx, id) }); err != nil {
 		return fmt.Errorf("wait for database: %w", err)
 	}
 
@@ -160,7 +166,7 @@ func waitReady(ctx context.Context, c *docker.Client, id string, timeout time.Du
 }
 
 func printCreated(id string, opts *docker.CreateOptions, output *outputFormat) error {
-	conn, err := newConnection(opts.Definition, docker.ContainerPrefix+opts.Name, opts.HostIP, opts.HostPort, opts.Password)
+	conn, err := newConnection(opts.Definition, opts.Name, opts.HostIP, opts.HostPort, opts.Password)
 	if err != nil {
 		return err
 	}
@@ -172,18 +178,27 @@ func printCreated(id string, opts *docker.CreateOptions, output *outputFormat) e
 		return writeJSON(conn)
 	}
 
-	table := newTable("Key", "Value")
-	table.AppendBulk([][]string{
-		{"Container ID", shortID(conn.ID)},
-		{"Name", conn.Name},
-		{"Database Type", conn.Type},
-		{"Image Tag", conn.Image},
-		{"Port", strconv.Itoa(conn.Port)},
+	details := keyValues([][2]string{
+		{"Type", conn.Type},
+		{"Image", conn.Image},
+		{"Host", conn.Host + ":" + strconv.Itoa(conn.Port)},
 		{"Password", conn.Password},
+		{"ID", muted(shortID(conn.ID))},
 	})
-	table.Render()
 
-	fmt.Printf("\nConnection String: %s\n", conn.URL)
+	body := strings.Join([]string{
+		accent(conn.Name) + " is ready",
+		"",
+		details,
+		"",
+		muted("Connection string"),
+		fg(colorAccent).Render(conn.URL),
+	}, "\n")
+
+	printOut("")
+	printOut(panel(body))
+	printOut(hintLine("Open a client with " + accent("dbctl shell "+conn.Name)))
+	printOut(hintLine("Show these details again with " + accent("dbctl url "+conn.Name)))
 
 	return nil
 }

@@ -12,9 +12,9 @@ func (a *app) newURLCmd() *cobra.Command {
 	var output *outputFormat
 
 	cmd := &cobra.Command{
-		Use:     "url <container-id>",
+		Use:     "url <name-or-id>",
 		Short:   "Print the connection string and credentials of a database",
-		Example: "  dbctl url container-id\n  dbctl url container-id -o json",
+		Example: "  dbctl url misty-river-bold-pine\n  dbctl url misty-river-bold-pine -o json",
 		Aliases: []string{"credentials", "creds"},
 		Args:    cobra.ExactArgs(1),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {

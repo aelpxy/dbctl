@@ -26,6 +26,8 @@ var (
 	ErrNotManaged = errors.New("container is not managed by dbctl")
 	ErrNotRunning = errors.New("database is not running")
 	ErrUnhealthy  = errors.New("database is unhealthy")
+
+	ErrDaemonUnreachable = errors.New("cannot reach the docker daemon")
 )
 
 // Client talks to the Docker daemon on behalf of dbctl.
@@ -61,7 +63,8 @@ func (c *Client) Close() error {
 
 func (c *Client) setup(ctx context.Context) error {
 	if _, err := c.api.Ping(ctx, client.PingOptions{}); err != nil {
-		return fmt.Errorf("reach docker daemon, make sure docker is installed and running: %w", err)
+		// docker's own message repeats the socket path and advice the caller already gives
+		return fmt.Errorf("%w at %s", ErrDaemonUnreachable, c.api.DaemonHost())
 	}
 
 	if _, err := c.api.NetworkInspect(ctx, networkName, client.NetworkInspectOptions{}); err == nil {
@@ -76,12 +79,17 @@ func (c *Client) setup(ctx context.Context) error {
 }
 
 // docker reports container names with a leading slash
-func displayName(name string) string {
+func containerName(name string) string {
 	return strings.TrimPrefix(name, "/")
 }
 
+// displayName is the short name users type, without the dbctl prefix.
+func displayName(name string) string {
+	return strings.TrimPrefix(containerName(name), ContainerPrefix)
+}
+
 func isManaged(name string) bool {
-	return strings.HasPrefix(displayName(name), ContainerPrefix)
+	return strings.HasPrefix(containerName(name), ContainerPrefix)
 }
 
 // containers created before the type label existed fall back to their image

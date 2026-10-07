@@ -49,7 +49,7 @@ type Volume struct {
 	Target string
 }
 
-// Inspect returns the database with the given container ID or name.
+// Inspect returns the database with the given short name, container name or ID prefix.
 func (c *Client) Inspect(ctx context.Context, id string) (*Database, error) {
 	info, err := c.inspect(ctx, id)
 	if err != nil {
@@ -96,7 +96,12 @@ func (c *Client) List(ctx context.Context) ([]Database, error) {
 }
 
 func (c *Client) inspect(ctx context.Context, id string) (*container.InspectResponse, error) {
-	result, err := c.api.ContainerInspect(ctx, id, client.ContainerInspectOptions{})
+	// the short name shown by ls wins over an unrelated container that happens to share it
+	result, err := c.api.ContainerInspect(ctx, ContainerPrefix+strings.TrimPrefix(id, ContainerPrefix), client.ContainerInspectOptions{})
+	if cerrdefs.IsNotFound(err) {
+		result, err = c.api.ContainerInspect(ctx, id, client.ContainerInspectOptions{})
+	}
+
 	if cerrdefs.IsNotFound(err) {
 		return nil, fmt.Errorf("%w: %s", ErrNotFound, id)
 	}

@@ -58,17 +58,18 @@ dbctl create redis:latest                     # custom image tag
 dbctl create mysql -P mypassword -p 3306 -n mydb
 dbctl create pgvector -o json                 # machine-readable output
 dbctl ls -o json
-dbctl url <container-id>                      # print the connection string again
-dbctl shell <container-id>                    # open psql, redis-cli, mongosh, ...
-dbctl shell <container-id> --sh               # plain /bin/sh instead
-dbctl stop <container-id>                     # keep the data, free the memory
-dbctl start <container-id>
-dbctl backup <container-id> -o backup.sql
-dbctl restore <container-id> backup.sql
-dbctl delete <container-id> --force=false     # keep the data volume
+dbctl url <name>                      # print the connection string again
+dbctl shell <name>                    # open psql, redis-cli, mongosh, ...
+dbctl shell <name> --sh               # plain /bin/sh instead
+dbctl stop <name>                     # keep the data, free the memory
+dbctl start <name>
+dbctl backup <name> -o backup.sql
+dbctl restore <name> backup.sql
+dbctl delete <name>                           # asks you to type the name to confirm
+dbctl delete <name> --yes --force=false       # no prompt, keep the data volume
 ```
 
-`ls`, `inspect`, `create` and `url` accept `-o json`. Progress output goes to stderr, so stdout stays pipeable.
+Commands accept the short name shown by `dbctl ls` (e.g. `misty-river-bold-pine`) or a container ID prefix. `ls`, `inspect`, `create` and `url` accept `-o json`. Progress output goes to stderr, so stdout stays pipeable, and colors are disabled when output is piped or `NO_COLOR` is set.
 
 ### Supported databases
 

@@ -18,11 +18,12 @@ type app struct {
 
 func (a *app) newRootCmd() *cobra.Command {
 	root := &cobra.Command{
-		Use:          "dbctl",
-		Short:        "A CLI tool for managing containerized databases",
-		Long:         "A command-line tool designed to simplify the management of databases, including creating, deleting, and other operations.",
-		SuggestFor:   []string{"db"},
-		SilenceUsage: true,
+		Use:           "dbctl",
+		Short:         "A CLI tool for managing containerized databases",
+		Long:          "A command-line tool designed to simplify the management of databases, including creating, deleting, and other operations.",
+		SuggestFor:    []string{"db"},
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
 	root.AddCommand(
