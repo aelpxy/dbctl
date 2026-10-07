@@ -32,6 +32,10 @@ func hintFor(err error) string {
 		return "Run " + accent("dbctl create --help") + " for the supported databases."
 	case errors.Is(err, errNoPassword):
 		return "Recreate the database to store its password."
+	case errors.Is(err, errMissingArgument):
+		return "Pass a database name, or run in a terminal to pick one."
+	case errors.Is(err, errNoDatabases):
+		return "Create one with " + accent("dbctl create postgres") + "."
 	case errors.Is(err, errNotConfirmed):
 		return "Pass " + accent("--yes") + " to skip the confirmation."
 	default:

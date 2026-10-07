@@ -17,13 +17,21 @@ func (a *app) newDeleteCmd() *cobra.Command {
 	opts := deleteOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "delete <name-or-id>...",
+		Use:     "delete [name-or-id...]",
 		Short:   "Stop and delete one or more databases",
 		Long:    "Stop and remove databases along with their data volumes (use --force=false to keep the volumes).",
 		Example: "  dbctl delete misty-river-bold-pine\n  dbctl delete misty-river-bold-pine --yes",
 		Aliases: []string{"rm"},
-		Args:    cobra.MinimumNArgs(1),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
+			if len(args) == 0 {
+				id, err := databaseArg(ctx, c, args, "Delete which database?")
+				if err != nil {
+					return err
+				}
+
+				args = []string{id}
+			}
+
 			for _, id := range args {
 				if err := deleteDatabase(ctx, c, id, &opts); err != nil {
 					return err

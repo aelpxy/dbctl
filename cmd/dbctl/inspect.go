@@ -12,12 +12,17 @@ func (a *app) newInspectCmd() *cobra.Command {
 	var output *outputFormat
 
 	cmd := &cobra.Command{
-		Use:     "inspect <name-or-id>",
+		Use:     "inspect [name-or-id]",
 		Short:   "Inspect a database",
 		Aliases: []string{"show"},
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MaximumNArgs(1),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
-			return runInspect(ctx, c, args[0], output)
+			id, err := databaseArg(ctx, c, args, "Inspect which database?")
+			if err != nil {
+				return err
+			}
+
+			return runInspect(ctx, c, id, output)
 		}),
 	}
 

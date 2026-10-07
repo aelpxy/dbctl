@@ -13,13 +13,18 @@ func (a *app) newLogsCmd() *cobra.Command {
 	opts := docker.LogsOptions{Stdout: os.Stdout, Stderr: os.Stderr}
 
 	cmd := &cobra.Command{
-		Use:     "logs <name-or-id>",
+		Use:     "logs [name-or-id]",
 		Short:   "Stream live logs of a database",
 		Example: "  dbctl logs misty-river-bold-pine\n  dbctl logs misty-river-bold-pine --tail 100 --follow=false",
 		Aliases: []string{"tail"},
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MaximumNArgs(1),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
-			if err := c.Logs(ctx, args[0], opts); err != nil {
+			id, err := databaseArg(ctx, c, args, "Show logs of which database?")
+			if err != nil {
+				return err
+			}
+
+			if err := c.Logs(ctx, id, opts); err != nil {
 				return fmt.Errorf("stream database logs: %w", err)
 			}
 

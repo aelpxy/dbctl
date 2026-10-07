@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aelpxy/dbctl/internal/docker"
 	"github.com/spf13/cobra"
@@ -44,10 +45,18 @@ func (a *app) newRestartCmd() *cobra.Command {
 
 func (a *app) newLifecycleCmd(action *lifecycleAction) *cobra.Command {
 	return &cobra.Command{
-		Use:   action.use + " <name-or-id>...",
+		Use:   action.use + " [name-or-id...]",
 		Short: action.short,
-		Args:  cobra.MinimumNArgs(1),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
+			if len(args) == 0 {
+				id, err := databaseArg(ctx, c, args, strings.ToUpper(action.use[:1])+action.use[1:]+" which database?")
+				if err != nil {
+					return err
+				}
+
+				args = []string{id}
+			}
+
 			for _, id := range args {
 				if err := runLifecycle(ctx, c, id, action); err != nil {
 					return err

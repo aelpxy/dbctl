@@ -32,7 +32,7 @@ func (a *app) newCreateCmd() *cobra.Command {
 	opts := createOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "create <database-type>[:image-tag]",
+		Use:   "create [database-type[:image-tag]]",
 		Short: "Create a new database",
 		Long:  "Create a new database and wait until it is ready.\n\nSupported databases: " + strings.Join(a.databases.Names(), ", "),
 		Example: `  dbctl create postgres
@@ -40,10 +40,15 @@ func (a *app) newCreateCmd() *cobra.Command {
   dbctl create mysql --password mypassword --port 3306 --name mydb
   dbctl create pgvector -o json`,
 		Aliases:   []string{"mk"},
-		Args:      cobra.MatchAll(cobra.ExactArgs(1), a.validDatabaseArg),
+		Args:      cobra.MatchAll(cobra.MaximumNArgs(1), a.validDatabaseArg),
 		ValidArgs: a.databases.Names(),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
-			return a.runCreate(ctx, c, args[0], &opts)
+			arg, err := a.typeArg(ctx, args)
+			if err != nil {
+				return err
+			}
+
+			return a.runCreate(ctx, c, arg, &opts)
 		}),
 	}
 
@@ -59,6 +64,10 @@ func (a *app) newCreateCmd() *cobra.Command {
 
 // validDatabaseArg rejects unknown database types before connecting to docker.
 func (a *app) validDatabaseArg(_ *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		return nil
+	}
+
 	if _, _, err := a.databases.Parse(args[0]); err != nil {
 		return fmt.Errorf("parse database type: %w", err)
 	}
