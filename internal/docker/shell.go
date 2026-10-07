@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/client"
 	"golang.org/x/term"
 )
 
@@ -35,13 +35,13 @@ func (c *Client) Shell(ctx context.Context, id string, opts ShellOptions) error 
 		return fmt.Errorf("get terminal size: %w", err)
 	}
 
-	exec, err := c.api.ContainerExecCreate(ctx, db.ID, container.ExecOptions{
+	exec, err := c.api.ExecCreate(ctx, db.ID, client.ExecCreateOptions{
 		AttachStdin:  true,
 		AttachStdout: true,
 		AttachStderr: true,
-		Tty:          true,
+		TTY:          true,
 		Cmd:          cmd,
-		ConsoleSize:  &[2]uint{uint(height), uint(width)},
+		ConsoleSize:  client.ConsoleSize{Height: uint(height), Width: uint(width)},
 	})
 	if err != nil {
 		return fmt.Errorf("create exec in container %s: %w", id, err)
@@ -79,7 +79,7 @@ func (c *Client) shellCommand(db *Database, plain bool) ([]string, error) {
 }
 
 func (c *Client) attach(ctx context.Context, execID string, stdin *os.File, stdout io.Writer) error {
-	resp, err := c.api.ContainerExecAttach(ctx, execID, container.ExecStartOptions{Tty: true})
+	resp, err := c.api.ExecAttach(ctx, execID, client.ExecAttachOptions{TTY: true})
 	if err != nil {
 		return fmt.Errorf("attach to exec %s: %w", execID, err)
 	}

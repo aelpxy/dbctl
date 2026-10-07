@@ -3,16 +3,15 @@ package docker
 import (
 	"context"
 	"fmt"
-	"io"
 
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
+	cerrdefs "github.com/containerd/errdefs"
+	"github.com/moby/moby/client"
 )
 
 // ImageExists reports whether the image is available locally.
 func (c *Client) ImageExists(ctx context.Context, ref string) (bool, error) {
-	_, _, err := c.api.ImageInspectWithRaw(ctx, ref)
-	if client.IsErrNotFound(err) {
+	_, err := c.api.ImageInspect(ctx, ref)
+	if cerrdefs.IsNotFound(err) {
 		return false, nil
 	}
 
@@ -25,16 +24,14 @@ func (c *Client) ImageExists(ctx context.Context, ref string) (bool, error) {
 
 // Pull downloads the image from its registry.
 func (c *Client) Pull(ctx context.Context, ref string) error {
-	out, err := c.api.ImagePull(ctx, ref, image.PullOptions{})
+	resp, err := c.api.ImagePull(ctx, ref, client.ImagePullOptions{})
 	if err != nil {
 		return fmt.Errorf("pull image %s: %w", ref, err)
 	}
 
-	defer func() { _ = out.Close() }()
-
-	// the pull only completes once the progress stream has been fully read
-	if _, err := io.Copy(io.Discard, out); err != nil {
-		return fmt.Errorf("read pull progress for %s: %w", ref, err)
+	// Wait drains the progress stream and reports errors the registry sent inside it
+	if err := resp.Wait(ctx); err != nil {
+		return fmt.Errorf("pull image %s: %w", ref, err)
 	}
 
 	return nil

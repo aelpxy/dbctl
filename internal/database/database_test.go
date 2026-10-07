@@ -76,35 +76,33 @@ func TestRenderAll(t *testing.T) {
 			def := get(t, r, name)
 			env := containerEnv(t, def, "secret")
 
-			if _, err := def.Command("secret"); err != nil {
-				t.Errorf("Command() error = %v", err)
-			}
-
-			if _, err := def.Healthcheck("secret"); err != nil {
-				t.Errorf("Healthcheck() error = %v", err)
-			}
-
-			if _, err := def.Client("secret", env); err != nil {
-				t.Errorf("Client() error = %v", err)
-			}
-
-			if _, err := def.URL("127.0.0.1", 1234, "secret"); err != nil {
-				t.Errorf("URL() error = %v", err)
-			}
-
-			if def.CanBackup() {
-				if _, err := def.Backup(env); err != nil {
-					t.Errorf("Backup() error = %v", err)
-				}
-			}
-
-			if def.CanRestore() {
-				if _, err := def.Restore(env); err != nil {
-					t.Errorf("Restore() error = %v", err)
-				}
+			if err := errors.Join(renderErrors(def, env)...); err != nil {
+				t.Error(err)
 			}
 		})
 	}
+}
+
+// renderErrors renders every template of def; errors name the failing template.
+func renderErrors(def *database.Definition, env map[string]string) []error {
+	_, commandErr := def.Command("secret")
+	_, healthcheckErr := def.Healthcheck("secret")
+	_, clientErr := def.Client("secret", env)
+	_, urlErr := def.URL("127.0.0.1", 1234, "secret")
+
+	errs := []error{commandErr, healthcheckErr, clientErr, urlErr}
+
+	if def.CanBackup() {
+		_, err := def.Backup(env)
+		errs = append(errs, err)
+	}
+
+	if def.CanRestore() {
+		_, err := def.Restore(env)
+		errs = append(errs, err)
+	}
+
+	return errs
 }
 
 func TestParse(t *testing.T) {

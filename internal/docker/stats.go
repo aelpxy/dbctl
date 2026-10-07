@@ -5,7 +5,8 @@ import (
 	"encoding/json/v2"
 	"fmt"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 const (
@@ -32,7 +33,7 @@ func (s Stats) MemoryLimitMB() float64 {
 
 // Stats returns a resource usage snapshot of the database container.
 func (c *Client) Stats(ctx context.Context, id string) (Stats, error) {
-	resp, err := c.api.ContainerStats(ctx, id, false)
+	resp, err := c.api.ContainerStats(ctx, id, client.ContainerStatsOptions{IncludePreviousSample: true})
 	if err != nil {
 		return Stats{}, fmt.Errorf("get container stats %s: %w", id, err)
 	}

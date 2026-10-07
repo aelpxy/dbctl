@@ -10,12 +10,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// container id and backup file
+const restoreArgCount = 2
+
 func (a *app) newRestoreCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "restore <container-id> <backup-file>",
 		Short:   "Restore a database from a backup file",
 		Example: "  dbctl restore container-id misty-river-bold-pine-20261007-120000.sql",
-		Args:    cobra.ExactArgs(2),
+		Args:    cobra.ExactArgs(restoreArgCount),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			return a.runRestore(ctx, c, args[0], args[1])
 		}),

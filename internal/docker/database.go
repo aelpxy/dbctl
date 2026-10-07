@@ -1,18 +1,19 @@
 package docker
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
+	cerrdefs "github.com/containerd/errdefs"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 )
 
 // Database is a container managed by dbctl.
@@ -55,18 +56,20 @@ func (c *Client) Inspect(ctx context.Context, id string) (*Database, error) {
 		return nil, err
 	}
 
-	return c.fromInspect(&info), nil
+	return c.fromInspect(info), nil
 }
 
 // List returns every database managed by dbctl, including stopped ones.
 func (c *Client) List(ctx context.Context) ([]Database, error) {
-	containers, err := c.api.ContainerList(ctx, container.ListOptions{
+	result, err := c.api.ContainerList(ctx, client.ContainerListOptions{
 		All:     true,
-		Filters: filters.NewArgs(filters.Arg("name", ContainerPrefix)),
+		Filters: make(client.Filters).Add("name", ContainerPrefix),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list containers: %w", err)
 	}
+
+	containers := result.Items
 
 	dbs := make([]Database, 0, len(containers))
 
@@ -82,42 +85,44 @@ func (c *Client) List(ctx context.Context) ([]Database, error) {
 			ID:      ctr.ID,
 			Name:    displayName(ctr.Names[0]),
 			Image:   ctr.Image,
-			State:   ctr.State,
+			State:   string(ctr.State),
 			Status:  ctr.Status,
 			Type:    c.typeName(ctr.Labels, ctr.Image),
-			Running: ctr.State == "running",
+			Running: ctr.State == container.StateRunning,
 		})
 	}
 
 	return dbs, nil
 }
 
-func (c *Client) inspect(ctx context.Context, id string) (types.ContainerJSON, error) {
-	info, err := c.api.ContainerInspect(ctx, id)
-	if client.IsErrNotFound(err) {
-		return types.ContainerJSON{}, fmt.Errorf("%w: %s", ErrNotFound, id)
+func (c *Client) inspect(ctx context.Context, id string) (*container.InspectResponse, error) {
+	result, err := c.api.ContainerInspect(ctx, id, client.ContainerInspectOptions{})
+	if cerrdefs.IsNotFound(err) {
+		return nil, fmt.Errorf("%w: %s", ErrNotFound, id)
 	}
 
 	if err != nil {
-		return types.ContainerJSON{}, fmt.Errorf("inspect container %s: %w", id, err)
+		return nil, fmt.Errorf("inspect container %s: %w", id, err)
 	}
 
+	info := &result.Container
+
 	if !isManaged(info.Name) {
-		return types.ContainerJSON{}, fmt.Errorf("%w: %s", ErrNotManaged, displayName(info.Name))
+		return nil, fmt.Errorf("%w: %s", ErrNotManaged, displayName(info.Name))
 	}
 
 	return info, nil
 }
 
-func (c *Client) fromInspect(info *types.ContainerJSON) *Database {
+func (c *Client) fromInspect(info *container.InspectResponse) *Database {
 	db := &Database{
 		Labels:   info.Config.Labels,
 		Env:      envMap(info.Config.Env),
 		ID:       info.ID,
 		Name:     displayName(info.Name),
 		Image:    info.Config.Image,
-		State:    info.State.Status,
-		Status:   info.State.Status,
+		State:    string(info.State.Status),
+		Status:   string(info.State.Status),
 		Type:     c.typeName(info.Config.Labels, info.Config.Image),
 		Password: info.Config.Labels[passwordLabel],
 		Volumes:  volumes(info.Mounts),
@@ -133,25 +138,38 @@ func (c *Client) fromInspect(info *types.ContainerJSON) *Database {
 	}
 
 	if info.State.Health != nil {
-		db.Health = info.State.Health.Status
+		db.Health = string(info.State.Health.Status)
 	}
 
 	return db
 }
 
-func ports(pm nat.PortMap) []Port {
+func ports(pm network.PortMap) []Port {
 	out := make([]Port, 0, len(pm))
+	byNumber := func(a, b network.Port) int { return cmp.Compare(a.Num(), b.Num()) }
 
-	for _, port := range slices.Sorted(maps.Keys(pm)) {
+	for _, port := range slices.SortedFunc(maps.Keys(pm), byNumber) {
 		for _, b := range pm[port] {
-			out = append(out, Port{HostIP: b.HostIP, HostPort: b.HostPort, ContainerPort: port.Port()})
+			out = append(out, Port{
+				HostIP:        hostIP(b),
+				HostPort:      b.HostPort,
+				ContainerPort: strconv.Itoa(int(port.Num())),
+			})
 		}
 	}
 
 	return out
 }
 
-func volumes(mounts []types.MountPoint) []Volume {
+func hostIP(b network.PortBinding) string {
+	if !b.HostIP.IsValid() {
+		return ""
+	}
+
+	return b.HostIP.String()
+}
+
+func volumes(mounts []container.MountPoint) []Volume {
 	out := make([]Volume, 0, len(mounts))
 
 	for i := range mounts {

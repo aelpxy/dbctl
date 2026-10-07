@@ -10,8 +10,8 @@ import (
 	"sync"
 
 	"github.com/aelpxy/dbctl/internal/database"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/moby/moby/api/pkg/stdcopy"
+	"github.com/moby/moby/client"
 )
 
 // execOptions wires a non-interactive command to the caller's streams.
@@ -23,7 +23,7 @@ type execOptions struct {
 
 // exec runs a command in the container without a tty, streaming stdin in and stdout out.
 func (c *Client) exec(ctx context.Context, containerID string, opts *execOptions) error {
-	created, err := c.api.ContainerExecCreate(ctx, containerID, container.ExecOptions{
+	created, err := c.api.ExecCreate(ctx, containerID, client.ExecCreateOptions{
 		Cmd:          opts.Exec.Command,
 		Env:          opts.Exec.Env,
 		AttachStdin:  opts.Stdin != nil,
@@ -34,7 +34,7 @@ func (c *Client) exec(ctx context.Context, containerID string, opts *execOptions
 		return fmt.Errorf("create exec in container %s: %w", containerID, err)
 	}
 
-	resp, err := c.api.ContainerExecAttach(ctx, created.ID, container.ExecStartOptions{})
+	resp, err := c.api.ExecAttach(ctx, created.ID, client.ExecAttachOptions{})
 	if err != nil {
 		return fmt.Errorf("attach to exec %s: %w", created.ID, err)
 	}
@@ -78,12 +78,9 @@ func (e *ExitError) Error() string {
 	return fmt.Sprintf("command exited with code %d", e.Code)
 }
 
+// the exit code is still read after ctx is canceled, e.g. when a shell is interrupted
 func (c *Client) execResult(ctx context.Context, execID string) error {
-	if ctx.Err() != nil {
-		return nil
-	}
-
-	result, err := c.api.ContainerExecInspect(ctx, execID)
+	result, err := c.api.ExecInspect(context.WithoutCancel(ctx), execID, client.ExecInspectOptions{})
 	if err != nil {
 		return fmt.Errorf("inspect exec %s: %w", execID, err)
 	}

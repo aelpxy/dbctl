@@ -5,16 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 const readyPollInterval = time.Second
-
-// health statuses reported by the docker engine
-const (
-	healthy   = "healthy"
-	unhealthy = "unhealthy"
-)
 
 // Start starts a stopped database.
 func (c *Client) Start(ctx context.Context, id string) error {
@@ -23,7 +18,7 @@ func (c *Client) Start(ctx context.Context, id string) error {
 		return err
 	}
 
-	if err := c.api.ContainerStart(ctx, info.ID, container.StartOptions{}); err != nil {
+	if _, err := c.api.ContainerStart(ctx, info.ID, client.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("start container %s: %w", id, err)
 	}
 
@@ -37,7 +32,7 @@ func (c *Client) Stop(ctx context.Context, id string) error {
 		return err
 	}
 
-	if err := c.api.ContainerStop(ctx, info.ID, container.StopOptions{}); err != nil {
+	if _, err := c.api.ContainerStop(ctx, info.ID, client.ContainerStopOptions{}); err != nil {
 		return fmt.Errorf("stop container %s: %w", id, err)
 	}
 
@@ -51,7 +46,7 @@ func (c *Client) Restart(ctx context.Context, id string) error {
 		return err
 	}
 
-	if err := c.api.ContainerRestart(ctx, info.ID, container.StopOptions{}); err != nil {
+	if _, err := c.api.ContainerRestart(ctx, info.ID, client.ContainerRestartOptions{}); err != nil {
 		return fmt.Errorf("restart container %s: %w", id, err)
 	}
 
@@ -96,10 +91,14 @@ func (c *Client) ready(ctx context.Context, id string) (bool, error) {
 	}
 
 	switch info.State.Health.Status {
-	case healthy:
+	case container.Healthy:
 		return true, nil
-	case unhealthy:
+	case container.Unhealthy:
 		return false, fmt.Errorf("%w: %s", ErrUnhealthy, id)
+	case container.NoHealthcheck:
+		return info.State.Running, nil
+	case container.Starting:
+		return false, nil
 	default:
 		return false, nil
 	}

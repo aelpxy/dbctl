@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 // DeleteOptions configures how a database is deleted.
@@ -20,7 +20,7 @@ func (c *Client) Delete(ctx context.Context, id string, opts DeleteOptions) ([]s
 		return nil, err
 	}
 
-	if err := c.api.ContainerRemove(ctx, info.ID, container.RemoveOptions{Force: true}); err != nil {
+	if _, err := c.api.ContainerRemove(ctx, info.ID, client.ContainerRemoveOptions{Force: true}); err != nil {
 		return nil, fmt.Errorf("remove container %s: %w", id, err)
 	}
 
@@ -32,7 +32,7 @@ func (c *Client) Delete(ctx context.Context, id string, opts DeleteOptions) ([]s
 	removed := make([]string, 0, len(vols))
 
 	for i := range vols {
-		if err := c.api.VolumeRemove(ctx, vols[i].Name, true); err != nil {
+		if _, err := c.api.VolumeRemove(ctx, vols[i].Name, client.VolumeRemoveOptions{Force: true}); err != nil {
 			return removed, fmt.Errorf("remove volume %s: %w", vols[i].Name, err)
 		}
 

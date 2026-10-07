@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/moby/moby/api/pkg/stdcopy"
+	"github.com/moby/moby/client"
 )
 
 // LogsOptions configures where and how database logs are streamed.
@@ -24,7 +24,7 @@ func (c *Client) Logs(ctx context.Context, id string, opts LogsOptions) error {
 		return err
 	}
 
-	logs, err := c.api.ContainerLogs(ctx, info.ID, container.LogsOptions{
+	logs, err := c.api.ContainerLogs(ctx, info.ID, client.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     opts.Follow,

@@ -8,8 +8,7 @@ import (
 	"strings"
 
 	"github.com/aelpxy/dbctl/internal/database"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/client"
 )
 
 // ContainerPrefix prefixes the name of every container managed by dbctl.
@@ -37,7 +36,7 @@ type Client struct {
 
 // New connects to the Docker daemon from the environment and ensures the dbctl network exists.
 func New(ctx context.Context, databases *database.Registry) (*Client, error) {
-	api, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	api, err := client.New(client.FromEnv)
 	if err != nil {
 		return nil, fmt.Errorf("create docker client: %w", err)
 	}
@@ -61,15 +60,15 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) setup(ctx context.Context) error {
-	if _, err := c.api.Ping(ctx); err != nil {
+	if _, err := c.api.Ping(ctx, client.PingOptions{}); err != nil {
 		return fmt.Errorf("reach docker daemon, make sure docker is installed and running: %w", err)
 	}
 
-	if _, err := c.api.NetworkInspect(ctx, networkName, network.InspectOptions{}); err == nil {
+	if _, err := c.api.NetworkInspect(ctx, networkName, client.NetworkInspectOptions{}); err == nil {
 		return nil
 	}
 
-	if _, err := c.api.NetworkCreate(ctx, networkName, network.CreateOptions{}); err != nil {
+	if _, err := c.api.NetworkCreate(ctx, networkName, client.NetworkCreateOptions{}); err != nil {
 		return fmt.Errorf("create network %s: %w", networkName, err)
 	}
 

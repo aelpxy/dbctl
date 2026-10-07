@@ -3,14 +3,15 @@ package docker
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"strconv"
 	"time"
 
 	"github.com/aelpxy/dbctl/internal/database"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/api/types/volume"
-	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 )
 
 const (
@@ -31,33 +32,47 @@ type CreateOptions struct {
 
 // Create creates and starts a database container with its data volume and returns the container ID.
 func (c *Client) Create(ctx context.Context, opts *CreateOptions) (string, error) {
-	cfg, err := containerConfig(opts)
+	port, err := network.ParsePort(strconv.Itoa(opts.Definition.Port()) + "/tcp")
+	if err != nil {
+		return "", fmt.Errorf("parse container port: %w", err)
+	}
+
+	cfg, err := containerConfig(opts, port)
 	if err != nil {
 		return "", err
 	}
 
 	volumeName := volumePrefix + opts.Name
 
-	if _, err := c.api.VolumeCreate(ctx, volume.CreateOptions{Name: volumeName}); err != nil {
+	host, err := hostConfig(opts, port, volumeName)
+	if err != nil {
+		return "", err
+	}
+
+	if _, err := c.api.VolumeCreate(ctx, client.VolumeCreateOptions{Name: volumeName}); err != nil {
 		return "", fmt.Errorf("create volume %s: %w", volumeName, err)
 	}
 
-	resp, err := c.api.ContainerCreate(ctx, cfg, hostConfig(opts, volumeName), nil, nil, ContainerPrefix+opts.Name)
+	resp, err := c.api.ContainerCreate(ctx, client.ContainerCreateOptions{
+		Config:     cfg,
+		HostConfig: host,
+		Name:       ContainerPrefix + opts.Name,
+	})
 	if err != nil {
 		// not forced so a volume still used by an existing database is never removed, a failure here is expected then
-		_ = c.api.VolumeRemove(ctx, volumeName, false)
+		_, _ = c.api.VolumeRemove(ctx, volumeName, client.VolumeRemoveOptions{})
 
 		return "", fmt.Errorf("create container: %w", err)
 	}
 
-	if err := c.api.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+	if _, err := c.api.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
 		return "", fmt.Errorf("start container %s: %w", resp.ID, err)
 	}
 
 	return resp.ID, nil
 }
 
-func containerConfig(opts *CreateOptions) (*container.Config, error) {
+func containerConfig(opts *CreateOptions, port network.Port) (*container.Config, error) {
 	def := opts.Definition
 
 	env, err := def.Env(opts.Password)
@@ -80,7 +95,7 @@ func containerConfig(opts *CreateOptions) (*container.Config, error) {
 		Env:          env,
 		Cmd:          cmd,
 		Healthcheck:  healthConfig(healthcheck),
-		ExposedPorts: nat.PortSet{containerPort(def): struct{}{}},
+		ExposedPorts: network.PortSet{port: struct{}{}},
 		Labels: map[string]string{
 			typeLabel:     def.Name(),
 			passwordLabel: opts.Password,
@@ -102,7 +117,12 @@ func healthConfig(test []string) *container.HealthConfig {
 	}
 }
 
-func hostConfig(opts *CreateOptions, volumeName string) *container.HostConfig {
+func hostConfig(opts *CreateOptions, port network.Port, volumeName string) (*container.HostConfig, error) {
+	hostIP, err := netip.ParseAddr(opts.HostIP)
+	if err != nil {
+		return nil, fmt.Errorf("parse host ip %q: %w", opts.HostIP, err)
+	}
+
 	return &container.HostConfig{
 		Mounts: []mount.Mount{
 			{
@@ -113,17 +133,13 @@ func hostConfig(opts *CreateOptions, volumeName string) *container.HostConfig {
 		},
 		NetworkMode:   container.NetworkMode(networkName),
 		RestartPolicy: container.RestartPolicy{Name: container.RestartPolicyUnlessStopped},
-		PortBindings: nat.PortMap{
-			containerPort(opts.Definition): []nat.PortBinding{
+		PortBindings: network.PortMap{
+			port: []network.PortBinding{
 				{
-					HostIP:   opts.HostIP,
+					HostIP:   hostIP,
 					HostPort: strconv.Itoa(opts.HostPort),
 				},
 			},
 		},
-	}
-}
-
-func containerPort(def *database.Definition) nat.Port {
-	return nat.Port(strconv.Itoa(def.Port()) + "/tcp")
+	}, nil
 }
