@@ -1,0 +1,23 @@
+{
+  "name": "mysql",
+  "repository": "mysql",
+  "tag": "9",
+  "port": 3306,
+  "data_dir": "/var/lib/mysql",
+  "env": [
+    "MYSQL_ROOT_PASSWORD={{.Password}}",
+    "MYSQL_DATABASE=db"
+  ],
+  "healthcheck": ["mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p{{.Password}}"],
+  "client": ["mysql", "-uroot", "-p{{.Env.MYSQL_ROOT_PASSWORD}}", "db"],
+  "url": "mysql://root:{{urlquery .Password}}@{{.Host}}/db",
+  "backup": {
+    "command": ["mysqldump", "-uroot", "--all-databases"],
+    "env": ["MYSQL_PWD={{.Env.MYSQL_ROOT_PASSWORD}}"],
+    "extension": "sql"
+  },
+  "restore": {
+    "command": ["mysql", "-uroot"],
+    "env": ["MYSQL_PWD={{.Env.MYSQL_ROOT_PASSWORD}}"]
+  }
+}

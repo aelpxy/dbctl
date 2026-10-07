@@ -1,0 +1,14 @@
+{
+  "name": "couchdb",
+  "repository": "couchdb",
+  "tag": "3.5",
+  "port": 5984,
+  "data_dir": "/opt/couchdb/data",
+  "env": [
+    "COUCHDB_USER=root",
+    "COUCHDB_PASSWORD={{.Password}}",
+    "COUCHDB_SECRET={{.Password}}"
+  ],
+  "healthcheck": ["curl", "-sf", "http://127.0.0.1:5984/_up"],
+  "url": "http://root:{{urlquery .Password}}@{{.Host}}"
+}

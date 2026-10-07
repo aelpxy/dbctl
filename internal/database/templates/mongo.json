@@ -1,0 +1,38 @@
+{
+  "name": "mongo",
+  "repository": "mongo",
+  "tag": "8.0",
+  "port": 27017,
+  "data_dir": "/data/db",
+  "unsupported_arch": ["arm"],
+  "env": [
+    "MONGO_INITDB_ROOT_USERNAME=root",
+    "MONGO_INITDB_ROOT_PASSWORD={{.Password}}",
+    "MONGO_INITDB_DATABASE=db"
+  ],
+  "healthcheck": ["mongosh", "--quiet", "--eval", "db.adminCommand('ping')"],
+  "client": [
+    "mongosh",
+    "--username", "{{.Env.MONGO_INITDB_ROOT_USERNAME}}",
+    "--password", "{{.Env.MONGO_INITDB_ROOT_PASSWORD}}",
+    "--authenticationDatabase", "admin"
+  ],
+  "url": "mongodb://root:{{urlquery .Password}}@{{.Host}}/db?authSource=admin",
+  "backup": {
+    "command": [
+      "mongodump", "--archive",
+      "--username", "{{.Env.MONGO_INITDB_ROOT_USERNAME}}",
+      "--password", "{{.Env.MONGO_INITDB_ROOT_PASSWORD}}",
+      "--authenticationDatabase", "admin"
+    ],
+    "extension": "archive"
+  },
+  "restore": {
+    "command": [
+      "mongorestore", "--archive",
+      "--username", "{{.Env.MONGO_INITDB_ROOT_USERNAME}}",
+      "--password", "{{.Env.MONGO_INITDB_ROOT_PASSWORD}}",
+      "--authenticationDatabase", "admin"
+    ]
+  }
+}

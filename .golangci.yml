@@ -1,0 +1,164 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - depguard
+    - errname
+    - errorlint
+    - exhaustive
+    - forbidigo
+    - funlen
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocritic
+    - intrange
+    - mnd
+    - modernize
+    - nakedret
+    - nilerr
+    - noctx
+    - nolintlint
+    - perfsprint
+    - prealloc
+    - revive
+    - sloglint
+    - thelper
+    - tparallel
+    - usestdlibvars
+    - usetesting
+    - whitespace
+    - wrapcheck
+    - wsl_v5
+
+  settings:
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: encoding/json$
+              desc: use encoding/json/v2
+            - pkg: syscall$
+              desc: use golang.org/x/sys/unix
+            - pkg: io/ioutil
+              desc: use io and os
+            - pkg: github.com/pkg/errors
+              desc: use errors and fmt.Errorf with %w
+            - pkg: github.com/stretchr/testify
+              desc: use the standard testing package and hand-written fakes
+            - pkg: github.com/golang/mock
+              desc: use hand-written fakes
+            - pkg: go.uber.org/mock
+              desc: use hand-written fakes
+
+    forbidigo:
+      forbid:
+        - pattern: ^fmt\.Print.*$
+          msg: use log/slog
+        - pattern: ^print(ln)?$
+          msg: use log/slog
+        - pattern: ^log\.(Print|Fatal|Panic).*$
+          msg: use log/slog
+        - pattern: ^http\.DefaultClient$
+          msg: use a client with timeouts
+        - pattern: ^http\.(Get|Head|Post|PostForm)$
+          msg: use a client with timeouts
+
+    funlen:
+      lines: 60
+      statements: 40
+
+    gocognit:
+      min-complexity: 15
+
+    goconst:
+      min-occurrences: 3
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+
+    mnd:
+      ignored-functions:
+        - ^os\.(Chmod|Mkdir|MkdirAll|OpenFile|WriteFile)$
+        - ^unix\.
+
+    nakedret:
+      max-func-lines: 0
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: early-return
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: get-return
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: max-control-nesting
+          arguments: [3]
+        - name: modifies-value-receiver
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unnecessary-stmt
+        - name: unreachable-code
+        - name: use-any
+        - name: var-declaration
+        - name: var-naming
+
+    sloglint:
+      kv-only: true
+      no-global: all
+      static-msg: true
+      msg-style: lowercased
+      key-naming-case: snake
+
+    staticcheck:
+      checks:
+        - all
+        - -ST1000
+        - -ST1020
+        - -ST1021
+        - -ST1022
+
+  exclusions:
+    rules:
+      - path: ^cmd/
+        linters:
+          - forbidigo
+          - sloglint
+      - path: _test\.go$
+        linters:
+          - funlen
+          - gochecknoglobals
+          - goconst
+          - mnd
+          - wrapcheck
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  uniq-by-line: false

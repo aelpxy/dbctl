@@ -1,0 +1,9 @@
+{
+  "name": "dragonfly",
+  "repository": "docker.dragonflydb.io/dragonflydb/dragonfly",
+  "tag": "v1.37.0",
+  "port": 6379,
+  "data_dir": "/data",
+  "command": ["dragonfly", "--logtostderr", "--dir", "/data", "--requirepass", "{{.Password}}"],
+  "url": "redis://default:{{urlquery .Password}}@{{.Host}}"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "keydb",
+  "repository": "eqalpha/keydb",
+  "tag": "latest",
+  "port": 6379,
+  "data_dir": "/data",
+  "command": ["keydb-server", "/etc/keydb/keydb.conf", "--appendonly", "yes", "--requirepass", "{{.Password}}"],
+  "healthcheck": ["keydb-cli", "-a", "{{.Password}}", "--no-auth-warning", "ping"],
+  "client": ["keydb-cli", "-a", "{{.Password}}", "--no-auth-warning"],
+  "url": "redis://default:{{urlquery .Password}}@{{.Host}}"
+}

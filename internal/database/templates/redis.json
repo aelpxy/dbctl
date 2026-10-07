@@ -1,0 +1,11 @@
+{
+  "name": "redis",
+  "repository": "redis",
+  "tag": "8.4-alpine",
+  "port": 6379,
+  "data_dir": "/data",
+  "command": ["redis-server", "--appendonly", "yes", "--requirepass", "{{.Password}}"],
+  "healthcheck": ["redis-cli", "-a", "{{.Password}}", "--no-auth-warning", "ping"],
+  "client": ["redis-cli", "-a", "{{.Password}}", "--no-auth-warning"],
+  "url": "redis://default:{{urlquery .Password}}@{{.Host}}"
+}

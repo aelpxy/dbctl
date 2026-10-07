@@ -1,0 +1,16 @@
+{
+  "name": "clickhouse",
+  "repository": "clickhouse/clickhouse-server",
+  "tag": "26.3",
+  "port": 9000,
+  "data_dir": "/var/lib/clickhouse",
+  "env": [
+    "CLICKHOUSE_DB=db",
+    "CLICKHOUSE_USER=root",
+    "CLICKHOUSE_PASSWORD={{.Password}}",
+    "CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1"
+  ],
+  "healthcheck": ["clickhouse-client", "--user", "root", "--password", "{{.Password}}", "--query", "SELECT 1"],
+  "client": ["clickhouse-client", "--user", "{{.Env.CLICKHOUSE_USER}}", "--password", "{{.Env.CLICKHOUSE_PASSWORD}}", "--database", "{{.Env.CLICKHOUSE_DB}}"],
+  "url": "clickhouse://root:{{urlquery .Password}}@{{.Host}}/db"
+}

@@ -1,0 +1,22 @@
+{
+  "name": "postgres",
+  "repository": "postgres",
+  "tag": "18-alpine",
+  "port": 5432,
+  "data_dir": "/var/lib/postgresql",
+  "env": [
+    "POSTGRES_PASSWORD={{.Password}}",
+    "POSTGRES_USER=postgres",
+    "POSTGRES_DB=postgres"
+  ],
+  "healthcheck": ["pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "postgres"],
+  "client": ["psql", "-U", "{{.Env.POSTGRES_USER}}", "-d", "{{.Env.POSTGRES_DB}}"],
+  "url": "postgres://postgres:{{urlquery .Password}}@{{.Host}}/postgres",
+  "backup": {
+    "command": ["pg_dump", "-U", "{{.Env.POSTGRES_USER}}", "{{.Env.POSTGRES_DB}}"],
+    "extension": "sql"
+  },
+  "restore": {
+    "command": ["psql", "-v", "ON_ERROR_STOP=1", "-U", "{{.Env.POSTGRES_USER}}", "-d", "{{.Env.POSTGRES_DB}}"]
+  }
+}

@@ -15,8 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: wangyoucao577/go-release-action@v1.51
+        env:
+          CGO_ENABLED: 0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
+          goversion: "1.27"
+          project_path: ./cmd/dbctl
+          binary_name: dbctl
+          build_flags: -trimpath
+          ldflags: -s -w
           md5sum: false

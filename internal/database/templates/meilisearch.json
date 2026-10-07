@@ -1,0 +1,10 @@
+{
+  "name": "meilisearch",
+  "repository": "getmeili/meilisearch",
+  "tag": "v1.37",
+  "port": 7700,
+  "data_dir": "/meili_data",
+  "command": ["meilisearch", "--master-key", "{{.Password}}"],
+  "healthcheck": ["curl", "-sf", "http://127.0.0.1:7700/health"],
+  "url": "http://{{.Host}}"
+}

@@ -1,0 +1,79 @@
+package main
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/aelpxy/dbctl/internal/docker"
+	"github.com/spf13/cobra"
+)
+
+type lifecycleAction struct {
+	run   func(ctx context.Context, c *docker.Client, id string) error
+	use   string
+	short string
+	verb  string
+	done  string
+}
+
+func (a *app) newStartCmd() *cobra.Command {
+	return a.newLifecycleCmd(&lifecycleAction{
+		run:   func(ctx context.Context, c *docker.Client, id string) error { return c.Start(ctx, id) },
+		use:   "start",
+		short: "Start one or more stopped databases",
+		verb:  "Starting",
+		done:  "started",
+	})
+}
+
+func (a *app) newStopCmd() *cobra.Command {
+	return a.newLifecycleCmd(&lifecycleAction{
+		run:   func(ctx context.Context, c *docker.Client, id string) error { return c.Stop(ctx, id) },
+		use:   "stop",
+		short: "Stop one or more databases without deleting them",
+		verb:  "Stopping",
+		done:  "stopped",
+	})
+}
+
+func (a *app) newRestartCmd() *cobra.Command {
+	return a.newLifecycleCmd(&lifecycleAction{
+		run:   func(ctx context.Context, c *docker.Client, id string) error { return c.Restart(ctx, id) },
+		use:   "restart",
+		short: "Restart one or more databases",
+		verb:  "Restarting",
+		done:  "restarted",
+	})
+}
+
+func (a *app) newLifecycleCmd(action *lifecycleAction) *cobra.Command {
+	return &cobra.Command{
+		Use:   action.use + " <container-id>...",
+		Short: action.short,
+		Args:  cobra.MinimumNArgs(1),
+		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
+			for _, id := range args {
+				if err := runLifecycle(ctx, c, id, action); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}),
+	}
+}
+
+func runLifecycle(ctx context.Context, c *docker.Client, id string, action *lifecycleAction) error {
+	s := startSpinner(action.verb + " database " + id + "...")
+	err := action.run(ctx, c, id)
+
+	s.Stop()
+
+	if err != nil {
+		return fmt.Errorf("%s database %s: %w", action.use, id, err)
+	}
+
+	fmt.Printf("Database %s has been %s.\n", id, action.done)
+
+	return nil
+}

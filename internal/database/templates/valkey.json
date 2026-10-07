@@ -1,0 +1,11 @@
+{
+  "name": "valkey",
+  "repository": "valkey/valkey",
+  "tag": "9.1-alpine",
+  "port": 6379,
+  "data_dir": "/data",
+  "command": ["valkey-server", "--appendonly", "yes", "--requirepass", "{{.Password}}"],
+  "healthcheck": ["valkey-cli", "-a", "{{.Password}}", "--no-auth-warning", "ping"],
+  "client": ["valkey-cli", "-a", "{{.Password}}", "--no-auth-warning"],
+  "url": "redis://default:{{urlquery .Password}}@{{.Host}}"
+}

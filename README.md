@@ -27,16 +27,21 @@ Usage:
   dbctl [command]
 
 Available Commands:
-  backup      Backup a database (postgres, mysql, mariadb, mongo)
+  backup      Backup a database
   completion  Generate the autocompletion script for the specified shell
   create      Create a new database
   delete      Stop and delete one or more databases
   help        Help about any command
   http        Start the API and serve it
-  inspect     Inspect a running database
+  inspect     Inspect a database
   logs        Stream live logs of a database
-  ls          List all running databases
-  shell       Connect to a running database container
+  ls          List all databases
+  restart     Restart one or more databases
+  restore     Restore a database from a backup file
+  shell       Open the database client, or a shell with --sh
+  start       Start one or more stopped databases
+  stop        Stop one or more databases without deleting them
+  url         Print the connection string and credentials of a database
   version     Prints the current dbctl version
 
 Flags:
@@ -48,28 +53,72 @@ Use "dbctl [command] --help" for more information about a command.
 ### Examples
 
 ```sh
-dbctl create postgres                         # default image tag, random port, name and password
+dbctl create postgres                         # default image, random port, name and password; waits until ready
 dbctl create redis:latest                     # custom image tag
 dbctl create mysql -P mypassword -p 3306 -n mydb
-dbctl ls
-dbctl logs <container-id> --tail 100
+dbctl create pgvector -o json                 # machine-readable output
+dbctl ls -o json
+dbctl url <container-id>                      # print the connection string again
+dbctl shell <container-id>                    # open psql, redis-cli, mongosh, ...
+dbctl shell <container-id> --sh               # plain /bin/sh instead
+dbctl stop <container-id>                     # keep the data, free the memory
+dbctl start <container-id>
 dbctl backup <container-id> -o backup.sql
+dbctl restore <container-id> backup.sql
 dbctl delete <container-id> --force=false     # keep the data volume
 ```
 
+`ls`, `inspect`, `create` and `url` accept `-o json`. Progress output goes to stderr, so stdout stays pipeable.
+
 ### Supported databases
 
-| Type          | Default image                        |
-| ------------- | ------------------------------------ |
-| `postgres`    | `postgres:18-alpine`                 |
-| `redis`       | `redis:8.4-alpine`                   |
-| `mysql`       | `mysql:9`                            |
-| `mariadb`     | `mariadb:11.8`                       |
-| `mongo`       | `mongo:8.0`                          |
-| `meilisearch` | `getmeili/meilisearch:v1.37`         |
-| `keydb`       | `eqalpha/keydb:latest`               |
-| `couchdb`     | `couchdb:3.5`                        |
-| `clickhouse`  | `clickhouse/clickhouse-server:26.3`  |
+| Type          | Default image                                         | Client        | Backup / restore |
+| ------------- | ----------------------------------------------------- | ------------- | ---------------- |
+| `postgres`    | `postgres:18-alpine`                                  | `psql`        | yes              |
+| `pgvector`    | `pgvector/pgvector:pg18`                              | `psql`        | yes              |
+| `mysql`       | `mysql:9`                                             | `mysql`       | yes              |
+| `mariadb`     | `mariadb:11.8`                                        | `mariadb`     | yes              |
+| `mongo`       | `mongo:8.0`                                           | `mongosh`     | yes              |
+| `redis`       | `redis:8.4-alpine`                                    | `redis-cli`   |                  |
+| `valkey`      | `valkey/valkey:9.1-alpine`                            | `valkey-cli`  |                  |
+| `keydb`       | `eqalpha/keydb:latest`                                | `keydb-cli`   |                  |
+| `dragonfly`   | `docker.dragonflydb.io/dragonflydb/dragonfly:v1.37.0` |               |                  |
+| `meilisearch` | `getmeili/meilisearch:v1.37`                          |               |                  |
+| `couchdb`     | `couchdb:3.5`                                         |               |                  |
+| `clickhouse`  | `clickhouse/clickhouse-server:26.3`                   | `clickhouse-client` |            |
+
+### Database templates
+
+Each database is a JSON template in [`internal/database/templates`](./internal/database/templates), embedded into the binary. To add a database, drop in a new file:
+
+```json
+{
+  "name": "postgres",
+  "repository": "postgres",
+  "tag": "18-alpine",
+  "port": 5432,
+  "data_dir": "/var/lib/postgresql",
+  "env": ["POSTGRES_PASSWORD={{.Password}}", "POSTGRES_USER=postgres", "POSTGRES_DB=postgres"],
+  "url": "postgres://postgres:{{urlquery .Password}}@{{.Host}}/postgres",
+  "backup": {
+    "command": ["pg_dump", "-U", "{{.Env.POSTGRES_USER}}", "{{.Env.POSTGRES_DB}}"],
+    "extension": "sql"
+  }
+}
+```
+
+Optional fields:
+
+- `env` and `command`: the container environment and command
+- `healthcheck`: a readiness probe; `create` waits for it to pass and `ls` shows the health
+- `client`: what `dbctl shell` opens (falls back to `/bin/sh`)
+- `backup` (`command`, `extension`, optional `env`): writes a dump to stdout
+- `restore` (`command`, optional `env`): reads a dump from stdin
+- `unsupported_arch`: a list of `GOARCH` values the image does not run on Strings are Go [`text/template`](https://pkg.go.dev/text/template)s with these fields:
+
+- `{{.Password}}`: the database password, in `env`, `command`, `healthcheck`, `client` and `url`
+- `{{.Host}}`: the published `host:port`, in `url`
+- `{{.Env.NAME}}`: the container's environment variables, in `client`, `backup` and `restore`; a missing variable is an error
 
 ### HTTP API
 
@@ -81,7 +130,7 @@ dbctl delete <container-id> --force=false     # keep the data volume
 
 ## Building
 
-Make sure Go (>= 1.23) is installed, then clone the repository:
+Make sure Go (>= 1.27) is installed, then clone the repository:
 
 ```sh
 git clone git@github.com:aelpxy/dbctl.git
@@ -100,7 +149,7 @@ Pull requests (PRs) are welcome. I recommend maintaining a consistent style of c
 
 ## Developing
 
-First of all, make sure Go (>= 1.23) and Docker are installed on your system.
+First of all, make sure Go (>= 1.27) and Docker are installed on your system.
 
 To start developing `dbctl`, clone the repository:
 
@@ -109,6 +158,14 @@ git clone git@github.com:aelpxy/dbctl.git
 ```
 
 Create a new branch following the conventional naming schema (not required but preferred - `feat/, fix/, refactor/, chore/`).
+
+The entrypoint lives in `cmd/dbctl` and everything else under `internal/`. Before committing, make sure the code is formatted, lint-free and tested:
+
+```sh
+make fmt   # golangci-lint fmt
+make lint  # golangci-lint run ./...
+make test  # go test -race ./...
+```
 
 Make your changes and then commit the message.
 

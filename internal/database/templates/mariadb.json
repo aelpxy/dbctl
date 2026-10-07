@@ -1,0 +1,23 @@
+{
+  "name": "mariadb",
+  "repository": "mariadb",
+  "tag": "11.8",
+  "port": 3306,
+  "data_dir": "/var/lib/mysql",
+  "env": [
+    "MARIADB_ROOT_PASSWORD={{.Password}}",
+    "MARIADB_DATABASE=db"
+  ],
+  "healthcheck": ["healthcheck.sh", "--connect", "--innodb_initialized"],
+  "client": ["mariadb", "-uroot", "-p{{.Env.MARIADB_ROOT_PASSWORD}}", "db"],
+  "url": "mariadb://root:{{urlquery .Password}}@{{.Host}}/db",
+  "backup": {
+    "command": ["mariadb-dump", "-uroot", "--all-databases"],
+    "env": ["MYSQL_PWD={{.Env.MARIADB_ROOT_PASSWORD}}"],
+    "extension": "sql"
+  },
+  "restore": {
+    "command": ["mariadb", "-uroot"],
+    "env": ["MYSQL_PWD={{.Env.MARIADB_ROOT_PASSWORD}}"]
+  }
+}
