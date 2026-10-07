@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/aelpxy/dbctl/config"
 	"github.com/aelpxy/dbctl/docker"
 	"github.com/aelpxy/dbctl/structs"
 )
@@ -38,11 +37,6 @@ type VolumeInfo struct {
 }
 
 func RetrieveDatabaseHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
-		return
-	}
-
 	containerId := r.PathValue("id")
 
 	if containerId == "" {
@@ -71,19 +65,7 @@ func RetrieveDatabaseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !strings.HasPrefix(strings.TrimPrefix(containerInfo.Name, "/"), config.DockerContainerPrefix) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-
-		json.NewEncoder(w).Encode(structs.Response{
-			Success: false,
-			Message: "Your database is not managed by dbctl.",
-		})
-
-		return
-	}
-
-	stats, err := docker.GetContainerStats(containerId)
+	stats, err := docker.GetContainerStats(containerInfo.ID)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)

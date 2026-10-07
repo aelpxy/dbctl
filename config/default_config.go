@@ -13,15 +13,15 @@ var SupportedDatabases = []string{
 }
 
 const (
-	RedisImageTag       string = "redis:7.4.1-alpine3.20"
-	PostgresImageTag    string = "postgres:17.0-alpine3.19"
-	MySQLImageTag       string = "mysql:9.0.1"
-	MariaDBImageTag     string = "mariadb:11.2.5-jammy"
-	MongoImageTag       string = "mongo:8.0.1-noble"
-	MeiliSearchImageTag string = "getmeili/meilisearch:v1.10.3"
+	RedisImageTag       string = "redis:8.4-alpine"
+	PostgresImageTag    string = "postgres:18-alpine"
+	MySQLImageTag       string = "mysql:9"
+	MariaDBImageTag     string = "mariadb:11.8"
+	MongoImageTag       string = "mongo:8.0"
+	MeiliSearchImageTag string = "getmeili/meilisearch:v1.37"
 	KeyDBImageTag       string = "eqalpha/keydb:latest"
-	CouchDbTag          string = "couchdb:3.4.2"
-	ClickHouseTag       string = "clickhouse/clickhouse-server:24.3.12-alpine"
+	CouchDbTag          string = "couchdb:3.5"
+	ClickHouseTag       string = "clickhouse/clickhouse-server:26.3"
 )
 
 const (
@@ -34,6 +34,7 @@ const (
 	DockerContainerPrefix string = "dbctl."
 	DockerNetworkName     string = "dbctl.network"
 	DockerVolumeName      string = "dbctl.volume."
+	DockerTypeLabel       string = "dbctl.type"
 )
 
 const DNSResolverAddress = "9.9.9.9:80"

@@ -24,32 +24,64 @@ curl -s https://raw.githubusercontent.com/aelpxy/dbctl/main/scripts/install.sh |
 A command-line tool designed to simplify the management of databases, including creating, deleting, and other operations.
 
 Usage:
-  dbctl [flags]
   dbctl [command]
 
 Available Commands:
-  backup      Backup a database
+  backup      Backup a database (postgres, mysql, mariadb, mongo)
   completion  Generate the autocompletion script for the specified shell
   create      Create a new database
-  delete      Stop and delete a database
+  delete      Stop and delete one or more databases
   help        Help about any command
   http        Start the API and serve it
   inspect     Inspect a running database
   logs        Stream live logs of a database
   ls          List all running databases
-  shell       Connect to a running database
+  shell       Connect to a running database container
   version     Prints the current dbctl version
 
 Flags:
   -h, --help   help for dbctl
 
 Use "dbctl [command] --help" for more information about a command.
-
 ```
+
+### Examples
+
+```sh
+dbctl create postgres                         # default image tag, random port, name and password
+dbctl create redis:latest                     # custom image tag
+dbctl create mysql -P mypassword -p 3306 -n mydb
+dbctl ls
+dbctl logs <container-id> --tail 100
+dbctl backup <container-id> -o backup.sql
+dbctl delete <container-id> --force=false     # keep the data volume
+```
+
+### Supported databases
+
+| Type          | Default image                        |
+| ------------- | ------------------------------------ |
+| `postgres`    | `postgres:18-alpine`                 |
+| `redis`       | `redis:8.4-alpine`                   |
+| `mysql`       | `mysql:9`                            |
+| `mariadb`     | `mariadb:11.8`                       |
+| `mongo`       | `mongo:8.0`                          |
+| `meilisearch` | `getmeili/meilisearch:v1.37`         |
+| `keydb`       | `eqalpha/keydb:latest`               |
+| `couchdb`     | `couchdb:3.5`                        |
+| `clickhouse`  | `clickhouse/clickhouse-server:26.3`  |
+
+### HTTP API
+
+`dbctl http localhost:5000` serves a read-only JSON API:
+
+- `GET /healthcheck`
+- `GET /databases`
+- `GET /databases/{id}`
 
 ## Building
 
-Make sure Go (>= 1.20) is installed, then clone the repository:
+Make sure Go (>= 1.23) is installed, then clone the repository:
 
 ```sh
 git clone git@github.com:aelpxy/dbctl.git
@@ -68,7 +100,7 @@ Pull requests (PRs) are welcome. I recommend maintaining a consistent style of c
 
 ## Developing
 
-First of all, make sure Go (>= 1.20) and Docker are installed on your system.
+First of all, make sure Go (>= 1.23) and Docker are installed on your system.
 
 To start developing `dbctl`, clone the repository:
 

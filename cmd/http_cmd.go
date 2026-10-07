@@ -29,14 +29,17 @@ func init() {
 }
 
 func startHttpServer(addr string) {
-	http.HandleFunc("/healthcheck", handlers.HealthCheckHandler)
-	http.HandleFunc("/databases", handlers.ListDatabaseHandler)
-	http.HandleFunc("/databases/{id}", handlers.RetrieveDatabaseHandler)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /healthcheck", handlers.HealthCheckHandler)
+	mux.HandleFunc("GET /databases", handlers.ListDatabaseHandler)
+	mux.HandleFunc("GET /databases/{id}", handlers.RetrieveDatabaseHandler)
 
 	log.Printf("Starting server on http://%s\n", addr)
 
 	server := &http.Server{
-		Addr: addr,
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	shutdown := make(chan os.Signal, 1)

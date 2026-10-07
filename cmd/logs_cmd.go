@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"log"
+
 	"github.com/aelpxy/dbctl/docker"
 	"github.com/spf13/cobra"
 )
@@ -8,18 +10,22 @@ import (
 var logsCmd = &cobra.Command{
 	Use:     "logs <container-id>",
 	Short:   "Stream live logs of a database",
-	Example: "dbctl logs container-id",
+	Example: "  dbctl logs container-id\n  dbctl logs container-id --tail 100 --follow=false",
 	Aliases: []string{"tail"},
-	Args:    cobra.MinimumNArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		streamLogs(args[0])
+		follow, _ := cmd.Flags().GetBool("follow")
+		tail, _ := cmd.Flags().GetString("tail")
+
+		if err := docker.StreamLogs(args[0], follow, tail); err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(logsCmd)
-}
+	logsCmd.Flags().BoolP("follow", "f", true, "Follow log output.")
+	logsCmd.Flags().StringP("tail", "t", "all", "Number of lines to show from the end of the logs.")
 
-func streamLogs(containerId string) {
-	docker.StreamLogs(containerId)
+	rootCmd.AddCommand(logsCmd)
 }

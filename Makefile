@@ -15,4 +15,4 @@ build_windows:
 
 build-all: build_linux build_darwin build_windows
 
-.PHONY: build build_linux build_darwin build_windows
+.PHONY: build build_linux build_darwin build_windows build-all

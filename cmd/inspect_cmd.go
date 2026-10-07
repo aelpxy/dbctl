@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aelpxy/dbctl/config"
 	"github.com/aelpxy/dbctl/docker"
 	"github.com/aelpxy/dbctl/utils"
 	"github.com/olekukonko/tablewriter"
@@ -34,11 +33,7 @@ func inspectDatabase(containerId string) {
 		log.Fatalf("error inspecting container: %v", err)
 	}
 
-	if !strings.HasPrefix(strings.TrimPrefix(containerInfo.Name, "/"), config.DockerContainerPrefix) {
-		log.Fatalf("this container %s is not managed by dbctl", containerInfo.Name)
-	}
-
-	stats, err := docker.GetContainerStats(containerId)
+	stats, err := docker.GetContainerStats(containerInfo.ID)
 	if err != nil {
 		log.Fatalf("error getting container stats: %v", err)
 	}

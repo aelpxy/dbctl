@@ -1,11 +1,12 @@
 package utils
 
 import (
+	crand "crypto/rand"
 	"fmt"
 	"log"
+	"math/big"
 	"math/rand"
 	"net"
-	"os/exec"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -14,12 +15,16 @@ import (
 )
 
 func GeneratePassword(length int) string {
-	// not the most secure way but does the job
 	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)
 
 	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
+		n, err := crand.Int(crand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			log.Fatalf("error generating password: %v", err)
+		}
+
+		b[i] = charset[n.Int64()]
 	}
 
 	return string(b)
@@ -27,7 +32,7 @@ func GeneratePassword(length int) string {
 
 func GetAvailablePort() int {
 	// not the best way
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		port := 30000 + rand.Intn(10000)
 		if isPortAvailable(port) {
 			return port
@@ -53,11 +58,6 @@ func isPortAvailable(port int) bool {
 	return true
 }
 
-func IsDockerInstalled() bool {
-	_, err := exec.Command("docker", "version").Output()
-	return err == nil
-}
-
 func GetColorBasedOnStatus(status string) tablewriter.Colors {
 	switch status {
 	case "running":
@@ -72,13 +72,7 @@ func GetColorBasedOnStatus(status string) tablewriter.Colors {
 }
 
 func ParseDBTypeAndVersion(part string) (string, string) {
-	parts := strings.Split(part, ":")
-	dbType := parts[0]
-	imageVersion := ""
-
-	if len(parts) > 1 {
-		imageVersion = parts[1]
-	}
+	dbType, imageVersion, _ := strings.Cut(part, ":")
 
 	return dbType, imageVersion
 }

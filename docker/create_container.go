@@ -14,157 +14,92 @@ import (
 
 func CreateContainer(imageName, dbType, containerName string, externalPort int, password string, envVars ...string) (string, error) {
 	dockerClient, err := DockerClient()
-
 	if err != nil {
 		return "", fmt.Errorf("error creating docker client: %w", err)
 	}
 
-	_, err = dockerClient.VolumeCreate(Ctx, volume.CreateOptions{
-		Name: config.DockerVolumeName + containerName,
-	})
-
-	if err != nil {
-		return "", fmt.Errorf("error creating volume: %w", err)
-	}
-
 	var internalPort int
-	var mountSource string
 	var mountTarget string
 	var cmd []string
-
-	hostIP := utils.GetIP().String()
 
 	switch dbType {
 	case "postgres":
 		internalPort = 5432
+		// postgres 18+ images store data under a versioned subdirectory of /var/lib/postgresql
+		mountTarget = "/var/lib/postgresql"
 	case "redis":
 		internalPort = 6379
-	case "mysql":
+		mountTarget = "/data"
+		cmd = []string{"redis-server", "--appendonly", "yes", "--requirepass", password}
+	case "mysql", "mariadb":
 		internalPort = 3306
-	case "mariadb":
-		internalPort = 3306
+		mountTarget = "/var/lib/mysql"
 	case "mongo":
 		internalPort = 27017
+		mountTarget = "/data/db"
 	case "meilisearch":
 		internalPort = 7700
+		mountTarget = "/meili_data"
+		cmd = []string{"meilisearch", "--master-key", password}
 	case "keydb":
 		internalPort = 6379
+		mountTarget = "/data"
+		cmd = []string{"keydb-server", "/etc/keydb/keydb.conf", "--appendonly", "yes", "--requirepass", password}
 	case "couchdb":
 		internalPort = 5984
+		mountTarget = "/opt/couchdb/data"
 	case "clickhouse":
 		internalPort = 9000
+		mountTarget = "/var/lib/clickhouse"
 	default:
 		return "", fmt.Errorf("unsupported database type: %s", dbType)
 	}
 
+	volumeName := config.DockerVolumeName + containerName
+
+	_, err = dockerClient.VolumeCreate(Ctx, volume.CreateOptions{Name: volumeName})
+	if err != nil {
+		return "", fmt.Errorf("error creating volume: %w", err)
+	}
+
+	port := nat.Port(strconv.Itoa(internalPort) + "/tcp")
+
 	containerConfig := &container.Config{
-		Image: imageName,
-		Env:   envVars,
-		ExposedPorts: nat.PortSet{
-			nat.Port(strconv.Itoa(internalPort) + "/tcp"): struct{}{},
-		},
-	}
-
-	switch dbType {
-	case "postgres":
-		mountSource = config.DockerVolumeName + containerName
-		mountTarget = "/var/lib/postgresql/data"
-
-		containerConfig.Env = append(containerConfig.Env,
-			"POSTGRES_DB=postgres",
-			"POSTGRES_USER=postgres",
-		)
-	case "redis":
-		mountSource = config.DockerVolumeName + containerName
-		mountTarget = "/data"
-
-		cmd = []string{"redis-server", "--requirepass", password}
-	case "mysql":
-		mountSource = config.DockerVolumeName + containerName
-		mountTarget = "/var/lib/mysql"
-
-		containerConfig.Env = append(containerConfig.Env, "MYSQL_DATABASE=db")
-	case "mariadb":
-		mountSource = config.DockerVolumeName + containerName
-		mountTarget = "/var/lib/mysql"
-
-		containerConfig.Env = append(containerConfig.Env, "MARIADB_DATABASE=db")
-	case "mongo":
-		mountSource = config.DockerVolumeName + containerName
-		mountTarget = "/data/db"
-
-		containerConfig.Env = append(containerConfig.Env,
-			"MONGO_INITDB_ROOT_USERNAME=root",
-			"MONGO_INITDB_DATABASE=db",
-		)
-	case "meilisearch":
-		mountSource = config.DockerVolumeName + containerName
-		mountTarget = "/meili_data"
-
-		cmd = []string{"meilisearch", "--master-key", password}
-	case "keydb":
-		mountSource = config.DockerVolumeName + containerName
-		mountTarget = "/data"
-
-		cmd = []string{"keydb-server", "/etc/keydb/keydb.conf", "--appendonly", "yes", "--requirepass", password}
-	case "couchdb":
-		mountSource = config.DockerVolumeName + containerName
-		mountTarget = "/opt/couchdb/data"
-
-		containerConfig.Env = append(containerConfig.Env,
-			"COUCHDB_USER=root",
-			"COUCHDB_PASSWORD="+password,
-			"COUCHDB_SECRET="+password,
-		)
-	case "clickhouse":
-		mountSource = config.DockerVolumeName + containerName
-		mountTarget = "/var/lib/clickhouse"
-
-		containerConfig.Env = append(containerConfig.Env,
-			"CLICKHOUSE_DB=db",
-			"CLICKHOUSE_USER=root",
-			"CLICKHOUSE_PASSWORD="+password,
-			"CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1",
-		) // TODO: Multiple ports
-	default:
-		mountSource = config.DockerVolumeName + containerName
-		mountTarget = "/data"
-	}
-
-	if len(cmd) > 0 {
-		containerConfig.Cmd = cmd
+		Image:        imageName,
+		Env:          envVars,
+		Cmd:          cmd,
+		ExposedPorts: nat.PortSet{port: struct{}{}},
+		Labels:       map[string]string{config.DockerTypeLabel: dbType},
 	}
 
 	hostConfig := &container.HostConfig{
 		Mounts: []mount.Mount{
 			{
 				Type:   mount.TypeVolume,
-				Source: mountSource,
+				Source: volumeName,
 				Target: mountTarget,
 			},
 		},
 		NetworkMode:   container.NetworkMode(config.DockerNetworkName),
-		RestartPolicy: container.RestartPolicy{Name: "always"},
+		RestartPolicy: container.RestartPolicy{Name: container.RestartPolicyAlways},
 		PortBindings: nat.PortMap{
-			nat.Port(strconv.Itoa(internalPort) + "/tcp"): []nat.PortBinding{
+			port: []nat.PortBinding{
 				{
-					HostIP:   hostIP,
+					HostIP:   utils.GetIP().String(),
 					HostPort: strconv.Itoa(externalPort),
 				},
 			},
 		},
 	}
 
-	containerName = fmt.Sprintf("%s%s", config.DockerContainerPrefix, containerName)
-
-	resp, err := dockerClient.ContainerCreate(Ctx, containerConfig, hostConfig, nil, nil, containerName)
-
+	resp, err := dockerClient.ContainerCreate(Ctx, containerConfig, hostConfig, nil, nil, config.DockerContainerPrefix+containerName)
 	if err != nil {
+		// not forced so a volume still used by an existing database is never removed
+		_ = dockerClient.VolumeRemove(Ctx, volumeName, false)
 		return "", fmt.Errorf("error creating container: %w", err)
 	}
 
 	err = dockerClient.ContainerStart(Ctx, resp.ID, container.StartOptions{})
-
 	if err != nil {
 		return "", fmt.Errorf("error starting container: %w", err)
 	}

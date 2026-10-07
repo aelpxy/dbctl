@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -50,7 +51,7 @@ func listDatabases() {
 	}
 
 	if len(filteredContainers) == 0 {
-		log.Println("No databases are currently running.")
+		fmt.Println("No databases are currently running.")
 		return
 	}
 

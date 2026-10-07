@@ -3,34 +3,47 @@ package docker
 import (
 	"context"
 	"fmt"
-	"log"
+	"sync"
 
 	"github.com/aelpxy/dbctl/config"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
 
-var Ctx context.Context
+var Ctx = context.Background()
+
+var (
+	cachedClient *client.Client
+	clientMu     sync.Mutex
+)
 
 func DockerClient() (*client.Client, error) {
-	Ctx = context.Background()
+	clientMu.Lock()
+	defer clientMu.Unlock()
 
-	apiClient, err := client.NewClientWithOpts(client.FromEnv)
+	if cachedClient != nil {
+		return cachedClient, nil
+	}
 
+	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = apiClient.NetworkInspect(Ctx, config.DockerNetworkName, network.InspectOptions{})
+	if _, err := apiClient.Ping(Ctx); err != nil {
+		apiClient.Close()
+		return nil, fmt.Errorf("unable to reach the docker daemon, make sure docker is installed and running: %w", err)
+	}
 
-	// basically checks if `config.DockerNetworkName` exists otherwise creates
-	if err != nil {
-		_, err = apiClient.NetworkCreate(Ctx, config.DockerNetworkName, network.CreateOptions{})
-
-		if err != nil {
-			log.Fatalln(fmt.Errorf("error creating docker network: %w", err))
+	// creates `config.DockerNetworkName` if it does not exist yet
+	if _, err := apiClient.NetworkInspect(Ctx, config.DockerNetworkName, network.InspectOptions{}); err != nil {
+		if _, err := apiClient.NetworkCreate(Ctx, config.DockerNetworkName, network.CreateOptions{}); err != nil {
+			apiClient.Close()
+			return nil, fmt.Errorf("error creating docker network: %w", err)
 		}
 	}
 
-	return apiClient, nil
+	cachedClient = apiClient
+
+	return cachedClient, nil
 }

@@ -1,42 +1,45 @@
 package docker
 
 import (
+	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/pkg/stdcopy"
 )
 
-func StreamLogs(containerId string) {
+func StreamLogs(containerId string, follow bool, tail string) error {
 	dockerClient, err := DockerClient()
 	if err != nil {
-		log.Fatalf("error creating docker client: %v", err)
+		return fmt.Errorf("error creating docker client: %w", err)
 	}
 
 	containerInfo, err := InspectContainer(containerId)
-
 	if err != nil {
-		log.Fatalf("error inspecting container: %v", err)
+		return err
 	}
 
-	logOptions := container.LogsOptions{
+	logs, err := dockerClient.ContainerLogs(Ctx, containerInfo.ID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
-		Follow:     true,
-		Timestamps: false,
-	}
-
-	logs, err := dockerClient.ContainerLogs(Ctx, containerInfo.ID, logOptions)
-
+		Follow:     follow,
+		Tail:       tail,
+	})
 	if err != nil {
-		log.Fatalf("error getting container logs: %v", err)
+		return fmt.Errorf("error getting container logs: %w", err)
 	}
 	defer logs.Close()
 
-	_, err = io.Copy(os.Stdout, logs)
-
-	if err != nil {
-		log.Fatalf("error streaming logs: %v", err)
+	// non-tty containers multiplex stdout and stderr into a single stream
+	if containerInfo.Config.Tty {
+		_, err = io.Copy(os.Stdout, logs)
+	} else {
+		_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, logs)
 	}
+	if err != nil {
+		return fmt.Errorf("error streaming logs: %w", err)
+	}
+
+	return nil
 }

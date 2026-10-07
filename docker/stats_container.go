@@ -38,9 +38,19 @@ func GetContainerStats(containerId string) (*ContainerStats, error) {
 		return nil, fmt.Errorf("error decoding container stats: %v", err)
 	}
 
-	cpuDelta := float64(containerStats.CPUStats.CPUUsage.TotalUsage - containerStats.PreCPUStats.CPUUsage.TotalUsage)
-	systemDelta := float64(containerStats.CPUStats.SystemUsage - containerStats.PreCPUStats.SystemUsage)
-	cpuPercentage := (cpuDelta / systemDelta) * float64(len(containerStats.CPUStats.CPUUsage.PercpuUsage)) * 100
+	cpuDelta := float64(containerStats.CPUStats.CPUUsage.TotalUsage) - float64(containerStats.PreCPUStats.CPUUsage.TotalUsage)
+	systemDelta := float64(containerStats.CPUStats.SystemUsage) - float64(containerStats.PreCPUStats.SystemUsage)
+
+	// PercpuUsage is empty on cgroup v2 hosts
+	onlineCPUs := float64(containerStats.CPUStats.OnlineCPUs)
+	if onlineCPUs == 0 {
+		onlineCPUs = float64(len(containerStats.CPUStats.CPUUsage.PercpuUsage))
+	}
+
+	var cpuPercentage float64
+	if systemDelta > 0 && cpuDelta > 0 {
+		cpuPercentage = (cpuDelta / systemDelta) * onlineCPUs * 100
+	}
 
 	return &ContainerStats{
 		CPUPercentage: cpuPercentage,
