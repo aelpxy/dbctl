@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const version = "1.2.0"
+const version = "2.0.0"
 
 type app struct {
 	databases *database.Registry
