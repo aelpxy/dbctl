@@ -5,6 +5,9 @@
   "port": 27017,
   "data_dir": "/data/db",
   "unsupported_arch": ["arm"],
+  "required_cpu_features": {
+    "arm64": ["atomics", "dcpop"]
+  },
   "env": [
     "MONGO_INITDB_ROOT_USERNAME=root",
     "MONGO_INITDB_ROOT_PASSWORD={{.Password}}",

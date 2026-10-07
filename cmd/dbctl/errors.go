@@ -7,7 +7,10 @@ import (
 	"github.com/aelpxy/dbctl/internal/docker"
 )
 
-var errNotConfirmed = errors.New("deletion not confirmed")
+var (
+	errNotConfirmed    = errors.New("deletion not confirmed")
+	errUnsupportedHost = errors.New("unsupported host")
+)
 
 // printError shows err with a suggested next step when the failure is a known one.
 func printError(err error) {
@@ -36,6 +39,8 @@ func hintFor(err error) string {
 		return "Pass a database name, or run in a terminal to pick one."
 	case errors.Is(err, errNoDatabases):
 		return "Create one with " + accent("dbctl create postgres") + "."
+	case errors.Is(err, errUnsupportedHost):
+		return "The image needs a newer CPU (on arm64, ARMv8.2-A or later, e.g. Raspberry Pi 5 rather than 4)."
 	case errors.Is(err, errNotConfirmed):
 		return "Pass " + accent("--yes") + " to skip the confirmation."
 	default:

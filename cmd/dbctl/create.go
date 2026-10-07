@@ -12,6 +12,7 @@ import (
 	"github.com/aelpxy/dbctl/internal/database"
 	"github.com/aelpxy/dbctl/internal/docker"
 	"github.com/aelpxy/dbctl/internal/generate"
+	"github.com/aelpxy/dbctl/internal/hostcpu"
 	"github.com/aelpxy/dbctl/internal/hostnet"
 	"github.com/spf13/cobra"
 )
@@ -82,7 +83,14 @@ func (a *app) runCreate(ctx context.Context, c *docker.Client, arg string, opts 
 	}
 
 	if !def.Supports(runtime.GOARCH) {
-		return fmt.Errorf("%s does not support %s systems", def.Name(), runtime.GOARCH)
+		return fmt.Errorf("%w: %s does not support %s systems", errUnsupportedHost, def.Name(), runtime.GOARCH)
+	}
+
+	if features, ok := hostcpu.Features(); ok {
+		if missing := def.MissingCPUFeatures(runtime.GOARCH, features); len(missing) > 0 {
+			return fmt.Errorf("%w: %s needs CPU features this machine lacks (%s)",
+				errUnsupportedHost, def.Name(), strings.Join(missing, ", "))
+		}
 	}
 
 	create, err := resolveCreate(ctx, def, def.Image(tag), opts)

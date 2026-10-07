@@ -217,3 +217,29 @@ func TestBackupAndRestore(t *testing.T) {
 		t.Errorf("Restore() error = %v, want %v", err, database.ErrRestoreUnsupported)
 	}
 }
+
+func TestMissingCPUFeatures(t *testing.T) {
+	t.Parallel()
+
+	r := load(t)
+	clickhouse := get(t, r, "clickhouse")
+
+	pi4 := strings.Fields("fp asimd evtstrm crc32 cpuid")
+	pi5 := strings.Fields("fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp")
+
+	if got := clickhouse.MissingCPUFeatures("arm64", pi4); len(got) == 0 {
+		t.Error("MissingCPUFeatures(arm64, pi4) is empty, want clickhouse rejected on a raspberry pi 4")
+	}
+
+	if got := clickhouse.MissingCPUFeatures("arm64", pi5); len(got) != 0 {
+		t.Errorf("MissingCPUFeatures(arm64, pi5) = %v, want none", got)
+	}
+
+	if got := clickhouse.MissingCPUFeatures("amd64", nil); len(got) != 0 {
+		t.Errorf("MissingCPUFeatures(amd64) = %v, want none", got)
+	}
+
+	if got := get(t, r, "postgres").MissingCPUFeatures("arm64", pi4); len(got) != 0 {
+		t.Errorf("postgres MissingCPUFeatures(arm64, pi4) = %v, want none", got)
+	}
+}

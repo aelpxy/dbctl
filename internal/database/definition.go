@@ -24,7 +24,9 @@ type spec struct {
 	Client          []string    `json:"client,omitzero"`
 	Healthcheck     []string    `json:"healthcheck,omitzero"`
 	UnsupportedArch []string    `json:"unsupported_arch,omitzero"`
-	Port            int         `json:"port"`
+	// RequiredCPUFeatures lists /proc/cpuinfo flags the image needs, keyed by GOARCH.
+	RequiredCPUFeatures map[string][]string `json:"required_cpu_features,omitzero"`
+	Port                int                 `json:"port"`
 }
 
 type backupSpec struct {
@@ -52,6 +54,7 @@ type Definition struct {
 	client          []*template.Template
 	healthcheck     []*template.Template
 	unsupportedArch []string
+	requiredCPU     map[string][]string
 	port            int
 }
 
@@ -85,6 +88,19 @@ func (d *Definition) DataDir() string {
 // Supports reports whether the database image runs on the given GOARCH.
 func (d *Definition) Supports(arch string) bool {
 	return !slices.Contains(d.unsupportedArch, arch)
+}
+
+// MissingCPUFeatures returns the CPU features the image needs on arch that are not in have.
+func (d *Definition) MissingCPUFeatures(arch string, have []string) []string {
+	var missing []string
+
+	for _, feature := range d.requiredCPU[arch] {
+		if !slices.Contains(have, feature) {
+			missing = append(missing, feature)
+		}
+	}
+
+	return missing
 }
 
 // Env renders the container environment.
@@ -123,6 +139,7 @@ func (s *spec) compile() (*Definition, error) {
 		tag:             s.Tag,
 		dataDir:         s.DataDir,
 		unsupportedArch: s.UnsupportedArch,
+		requiredCPU:     s.RequiredCPUFeatures,
 		port:            s.Port,
 	}
 

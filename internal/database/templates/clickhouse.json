@@ -4,6 +4,9 @@
   "tag": "26.3",
   "port": 9000,
   "data_dir": "/var/lib/clickhouse",
+  "required_cpu_features": {
+    "arm64": ["atomics", "dcpop", "lrcpc"]
+  },
   "env": [
     "CLICKHOUSE_DB=db",
     "CLICKHOUSE_USER=root",
