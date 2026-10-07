@@ -12,10 +12,11 @@ func (a *app) newInspectCmd() *cobra.Command {
 	var output *outputFormat
 
 	cmd := &cobra.Command{
-		Use:     "inspect [name-or-id]",
-		Short:   "Inspect a database",
-		Aliases: []string{"show"},
-		Args:    cobra.MaximumNArgs(1),
+		Use:               "inspect [name-or-id]",
+		Short:             "Inspect a database",
+		Aliases:           []string{"show"},
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: a.completeDatabases(false),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			id, err := databaseArg(ctx, c, args, "Inspect which database?")
 			if err != nil {

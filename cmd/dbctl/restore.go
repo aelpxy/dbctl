@@ -15,10 +15,11 @@ const restoreArgCount = 2
 
 func (a *app) newRestoreCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:     "restore <name-or-id> <backup-file>",
-		Short:   "Restore a database from a backup file",
-		Example: "  dbctl restore misty-river-bold-pine misty-river-bold-pine-20261007-120000.sql",
-		Args:    cobra.ExactArgs(restoreArgCount),
+		Use:               "restore <name-or-id> <backup-file>",
+		Short:             "Restore a database from a backup file",
+		Example:           "  dbctl restore misty-river-bold-pine misty-river-bold-pine-20261007-120000.sql",
+		Args:              cobra.ExactArgs(restoreArgCount),
+		ValidArgsFunction: a.completeRestore,
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			return a.runRestore(ctx, c, args[0], args[1])
 		}),

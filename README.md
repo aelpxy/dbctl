@@ -29,6 +29,7 @@ Usage:
 Available Commands:
   backup      Backup a database
   completion  Generate the autocompletion script for the specified shell
+  connect     Open a local port that forwards to a database
   create      Create a new database
   delete      Stop and delete one or more databases
   help        Help about any command
@@ -61,6 +62,8 @@ dbctl ls -o json
 dbctl url <name>                      # print the connection string again
 dbctl shell <name>                    # open psql, redis-cli, mongosh, ...
 dbctl shell <name> --sh               # plain /bin/sh instead
+dbctl connect <name>                          # forward 127.0.0.1:<port> to the database until Ctrl-C
+dbctl shell                                   # no name: pick a database from a list
 dbctl stop <name>                     # keep the data, free the memory
 dbctl start <name>
 dbctl backup <name> -o backup.sql
@@ -69,7 +72,17 @@ dbctl delete <name>                           # asks you to type the name to con
 dbctl delete <name> --yes --force=false       # no prompt, keep the data volume
 ```
 
-Commands accept the short name shown by `dbctl ls` (e.g. `misty-river-bold-pine`) or a container ID prefix. `ls`, `inspect`, `create` and `url` accept `-o json`. Progress output goes to stderr, so stdout stays pipeable, and colors are disabled when output is piped or `NO_COLOR` is set.
+Commands that take a database open an interactive picker when you leave the name out (in a terminal), and accept the short name shown by `dbctl ls` (e.g. `misty-river-bold-pine`) or a container ID prefix. `ls`, `inspect`, `create` and `url` accept `-o json`. Progress output goes to stderr, so stdout stays pipeable, and colors are disabled when output is piped or `NO_COLOR` is set.
+
+### Shell completion
+
+Completion suggests database names and types. Enable it for your shell, for example:
+
+```sh
+dbctl completion bash > /etc/bash_completion.d/dbctl     # bash
+dbctl completion zsh > "${fpath[1]}/_dbctl"              # zsh
+dbctl completion fish > ~/.config/fish/completions/dbctl.fish
+```
 
 ### Supported databases
 
@@ -115,7 +128,8 @@ Optional fields:
 - `client`: what `dbctl shell` opens (falls back to `/bin/sh`)
 - `backup` (`command`, `extension`, optional `env`): writes a dump to stdout
 - `restore` (`command`, optional `env`): reads a dump from stdin
-- `unsupported_arch`: a list of `GOARCH` values the image does not run on Strings are Go [`text/template`](https://pkg.go.dev/text/template)s with these fields:
+- `unsupported_arch`: a list of `GOARCH` values the image does not run on
+- `required_cpu_features`: `/proc/cpuinfo` flags the image needs, per `GOARCH` (e.g. ClickHouse and MongoDB need ARMv8.2-A on arm64, so a Raspberry Pi 4 is refused up front) Strings are Go [`text/template`](https://pkg.go.dev/text/template)s with these fields:
 
 - `{{.Password}}`: the database password, in `env`, `command`, `healthcheck`, `client` and `url`
 - `{{.Host}}`: the published `host:port`, in `url`

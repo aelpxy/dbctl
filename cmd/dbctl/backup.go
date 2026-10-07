@@ -19,11 +19,12 @@ func (a *app) newBackupCmd() *cobra.Command {
 	output := ""
 
 	cmd := &cobra.Command{
-		Use:     "backup [name-or-id]",
-		Short:   "Backup a database",
-		Example: "  dbctl backup misty-river-bold-pine\n  dbctl backup misty-river-bold-pine -o backup.sql",
-		Aliases: []string{"cp"},
-		Args:    cobra.MaximumNArgs(1),
+		Use:               "backup [name-or-id]",
+		Short:             "Backup a database",
+		Example:           "  dbctl backup misty-river-bold-pine\n  dbctl backup misty-river-bold-pine -o backup.sql",
+		Aliases:           []string{"cp"},
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: a.completeDatabases(false),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			id, err := databaseArg(ctx, c, args, "Back up which database?")
 			if err != nil {

@@ -13,11 +13,12 @@ func (a *app) newShellCmd() *cobra.Command {
 	opts := docker.ShellOptions{Stdin: os.Stdin, Stdout: os.Stdout}
 
 	cmd := &cobra.Command{
-		Use:     "shell [name-or-id]",
-		Short:   "Open the database client, or a shell with --sh",
-		Example: "  dbctl shell misty-river-bold-pine\n  dbctl shell misty-river-bold-pine --sh",
-		Aliases: []string{"enter", "sh"},
-		Args:    cobra.MaximumNArgs(1),
+		Use:               "shell [name-or-id]",
+		Short:             "Open the database client, or a shell with --sh",
+		Example:           "  dbctl shell misty-river-bold-pine\n  dbctl shell misty-river-bold-pine --sh",
+		Aliases:           []string{"enter", "sh"},
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: a.completeDatabases(false),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			id, err := databaseArg(ctx, c, args, "Open a client for which database?")
 			if err != nil {

@@ -12,11 +12,12 @@ func (a *app) newURLCmd() *cobra.Command {
 	var output *outputFormat
 
 	cmd := &cobra.Command{
-		Use:     "url [name-or-id]",
-		Short:   "Print the connection string and credentials of a database",
-		Example: "  dbctl url misty-river-bold-pine\n  dbctl url misty-river-bold-pine -o json",
-		Aliases: []string{"credentials", "creds"},
-		Args:    cobra.MaximumNArgs(1),
+		Use:               "url [name-or-id]",
+		Short:             "Print the connection string and credentials of a database",
+		Example:           "  dbctl url misty-river-bold-pine\n  dbctl url misty-river-bold-pine -o json",
+		Aliases:           []string{"credentials", "creds"},
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: a.completeDatabases(false),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			id, err := databaseArg(ctx, c, args, "Show the connection string of which database?")
 			if err != nil {

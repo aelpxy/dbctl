@@ -28,8 +28,9 @@ func (a *app) newConnectCmd() *cobra.Command {
 		Short: "Open a local port that forwards to a database",
 		Long: "Listen on 127.0.0.1 and forward every connection to the database, printing a ready-to-use " +
 			"connection string. Runs until Ctrl-C.",
-		Example: "  dbctl connect misty-river-bold-pine\n  dbctl connect misty-river-bold-pine --port 15432",
-		Args:    cobra.MaximumNArgs(1),
+		Example:           "  dbctl connect misty-river-bold-pine\n  dbctl connect misty-river-bold-pine --port 15432",
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: a.completeDatabases(false),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			id, err := databaseArg(ctx, c, args, "Connect to which database?")
 			if err != nil {

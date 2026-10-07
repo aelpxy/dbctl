@@ -45,8 +45,9 @@ func (a *app) newRestartCmd() *cobra.Command {
 
 func (a *app) newLifecycleCmd(action *lifecycleAction) *cobra.Command {
 	return &cobra.Command{
-		Use:   action.use + " [name-or-id...]",
-		Short: action.short,
+		Use:               action.use + " [name-or-id...]",
+		Short:             action.short,
+		ValidArgsFunction: a.completeDatabases(true),
 		RunE: a.withDocker(func(ctx context.Context, c *docker.Client, args []string) error {
 			if len(args) == 0 {
 				id, err := databaseArg(ctx, c, args, strings.ToUpper(action.use[:1])+action.use[1:]+" which database?")
