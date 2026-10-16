@@ -57,7 +57,7 @@ func TestLoad(t *testing.T) {
 
 	want := []string{
 		"clickhouse", "couchdb", "dragonfly", "keydb", "mariadb", "meilisearch",
-		"mongo", "mysql", "pgvector", "postgres", "redis", "valkey",
+		"mongo", "mysql", "pgvector", "postgres", "redis", "timescaledb", "valkey",
 	}
 	if got := r.Names(); !slices.Equal(got, want) {
 		t.Errorf("Names() = %v, want %v", got, want)
@@ -153,6 +153,7 @@ func TestFromImage(t *testing.T) {
 	}{
 		{image: "postgres:17.0-alpine3.19", want: "postgres"},
 		{image: "pgvector/pgvector:pg18", want: "pgvector"},
+		{image: "timescale/timescaledb:2.30.2-pg18", want: "timescaledb"},
 		{image: "getmeili/meilisearch:v1.10.3", want: "meilisearch"},
 		{image: "clickhouse/clickhouse-server", want: "clickhouse"},
 		{image: "docker.dragonflydb.io/dragonflydb/dragonfly:v1.37.0", want: "dragonfly"},

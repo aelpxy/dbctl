@@ -90,6 +90,7 @@ dbctl completion fish > ~/.config/fish/completions/dbctl.fish
 | ------------- | ----------------------------------------------------- | ------------- | ---------------- |
 | `postgres`    | `postgres:18-alpine`                                  | `psql`        | yes              |
 | `pgvector`    | `pgvector/pgvector:pg18`                              | `psql`        | yes              |
+| `timescaledb` | `timescale/timescaledb:latest-pg18`                   | `psql`        | yes              |
 | `mysql`       | `mysql:9`                                             | `mysql`       | yes              |
 | `mariadb`     | `mariadb:11.8`                                        | `mariadb`     | yes              |
 | `mongo`       | `mongo:8.0`                                           | `mongosh`     | yes              |
